@@ -1,0 +1,25 @@
+# Окружение
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node и Nuxt
+node_modules/
+.nuxt/
+.output/
+.data/
+dist/
+
+# Редакторы и система
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
