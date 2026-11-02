@@ -9,12 +9,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.delivery import calc_delivery_price, calc_lifting_price
 from app.enums.availability import AvailabilityEnum
-from app.enums.order import AllocationSourceEnum, LiftingTypeEnum, OrderServiceTypeEnum
+from app.enums.order import (
+    AllocationSourceEnum,
+    LiftingTypeEnum,
+    OrderEventActionEnum,
+    OrderServiceTypeEnum,
+    OrderStatusEnum,
+)
 from app.enums.product_status import ProductStatusEnum
 from app.models.catalog import Product
 from app.models.inventory import SupplierOffer
 from app.models.location import Building, ResidentialComplex, ServiceTariff
-from app.models.order import Order, OrderAllocation, OrderLine, OrderServiceLine
+from app.models.order import Order, OrderAllocation, OrderEvent, OrderLine, OrderServiceLine
 from app.repositories.location_repo import LocationRepository
 from app.repositories.order_repo import OrderRepository
 from app.repositories.pricing_repo import PricingRepository
@@ -230,6 +236,13 @@ class CheckoutService:
             total=quote.total,
         )
         await self.repo.add(order)
+        await self.repo.add(
+            OrderEvent(
+                order_id=order.id,
+                action=OrderEventActionEnum.created.value,
+                status=OrderStatusEnum.new.value,
+            )
+        )
 
         for line in quote.lines:
             order_line = OrderLine(
@@ -314,7 +327,7 @@ class CheckoutService:
             lines.append(f"Доставка: {order.delivery_date:%d.%m}")
         if any(line.availability == AvailabilityEnum.on_order for line in quote.lines):
             lines.append("Есть товары партнёра: подтвердите наличие")
-        lines.append(f"{settings.SITE_URL}/admin/orders/{order.id}")
+        lines.append(f"{settings.SITE_URL}/manager/orders/{order.id}")
         return "\n".join(lines)
 
     # ─── Статус для покупателя ────────────────────────────────────────────────

@@ -31,5 +31,6 @@ def require_role(*roles: UserRoleEnum):
 
 
 require_admin = require_role(UserRoleEnum.admin)
-# Менеджер и администратор
+# Менеджер и владелец
 require_staff = require_role(UserRoleEnum.admin, UserRoleEnum.manager)
+require_courier = require_role(UserRoleEnum.courier)

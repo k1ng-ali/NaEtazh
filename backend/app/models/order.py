@@ -5,6 +5,7 @@
 - OrderLine: снимок товара и цены на момент заказа
 - OrderAllocation: откуда взято количество и за какую себестоимость
 - OrderServiceLine: доставка или подъём, цена и расход
+- OrderEvent: история действий с заказом
 """
 
 from sqlalchemy import TIMESTAMP, BigInteger, Column, Date, ForeignKey, Numeric, String, Text, func
@@ -47,6 +48,13 @@ class Order(Base):
     # Пожелание покупателя, менеджер подтверждает по телефону
     delivery_date = Column(Date, nullable=True)
     delivery_slot = Column(String, nullable=True)
+    # Согласованная менеджером доставка, по ней курьер видит свой день
+    courier_id = Column(BigInteger, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    planned_date = Column(Date, nullable=True, index=True)
+    planned_slot = Column(String, nullable=True)
+    # Сколько курьер получил наличными, для сверки с суммой заказа
+    cash_received = Column(Numeric(12, 2), nullable=True)
+    delivered_at = Column(TIMESTAMP(timezone=True), nullable=True)
     # Метка QR-кода или партии визиток
     source_code = Column(String, nullable=True, index=True)
     goods_total = Column(Numeric(12, 2), nullable=False)
@@ -105,3 +113,19 @@ class OrderServiceLine(Base):
     price = Column(Numeric(12, 2), nullable=False)
     # Расход клиента на услугу, для расчёта прибыли
     cost = Column(Numeric(12, 2), nullable=True)
+
+
+class OrderEvent(Base):
+    """История заказа: кто и когда менял статус, доставку или сообщал о проблеме."""
+
+    __tablename__ = "order_events"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    order_id = Column(BigInteger, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True)
+    # Пусто: действие покупателя или системы
+    user_id = Column(BigInteger, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    action = Column(String, nullable=False)
+    # Новый статус, если действие его меняло
+    status = Column(String, nullable=True)
+    comment = Column(Text, nullable=True)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)

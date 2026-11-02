@@ -1,11 +1,13 @@
+from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import exists, func, or_, select
 
-from app.enums.order import AllocationSourceEnum
+from app.enums.order import AllocationSourceEnum, OrderStatusEnum
 from app.models.catalog import Product
 from app.models.inventory import StockItem, Supplier, SupplierOffer, Warehouse
-from app.models.order import Order, OrderAllocation, OrderLine, OrderServiceLine
+from app.models.order import Order, OrderAllocation, OrderEvent, OrderLine, OrderServiceLine
+from app.models.user import User
 from app.repositories.base_repo import BaseRepository
 
 
@@ -144,3 +146,30 @@ class OrderRepository(BaseRepository):
             .limit(limit)
         )
         return [(order, flag) for order, flag in result.all()], total.scalar() or 0
+
+    # ─── История и курьер ─────────────────────────────────────────────────────
+
+    async def get_events(self, order_id: int) -> list[tuple[OrderEvent, str | None]]:
+        result = await self.db.execute(
+            select(OrderEvent, User.name)
+            .outerjoin(User, User.id == OrderEvent.user_id)
+            .where(OrderEvent.order_id == order_id)
+            .order_by(OrderEvent.created_at, OrderEvent.id)
+        )
+        return [(event, name) for event, name in result.all()]
+
+    async def get_courier_orders(self, courier_id: int, delivered_since: datetime) -> list[Order]:
+        """Активные доставки курьера и то, что он уже отвёз сегодня."""
+        result = await self.db.execute(
+            select(Order)
+            .where(
+                Order.courier_id == courier_id,
+                or_(
+                    Order.status.in_([OrderStatusEnum.confirmed.value, OrderStatusEnum.in_delivery.value]),
+                    (Order.status == OrderStatusEnum.delivered.value)
+                    & (Order.delivered_at >= delivered_since),
+                ),
+            )
+            .order_by(Order.planned_date.asc().nulls_last(), Order.planned_slot, Order.id)
+        )
+        return list(result.scalars().all())

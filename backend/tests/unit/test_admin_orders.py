@@ -11,9 +11,10 @@ from app.services.admin_order_service import AdminOrderService
 
 def make_service(order_status: str, allocations=()):
     service = AdminOrderService(db=AsyncMock())
-    order = SimpleNamespace(id=1, status=order_status)
+    order = SimpleNamespace(id=1, status=order_status, courier_id=5, total=Decimal("100"))
     service.repo.get_order_for_update = AsyncMock(return_value=order)
     service.repo.get_warehouse_allocations_for_update = AsyncMock(return_value=list(allocations))
+    service.repo.add = AsyncMock()
     service._order_out = AsyncMock(return_value="out")
     return service, order
 
@@ -22,7 +23,7 @@ async def test_change_status_rejects_skipping_steps():
     service, _ = make_service(OrderStatusEnum.new.value)
 
     with pytest.raises(HTTPException) as exc:
-        await service.change_status(order_id=1, new_status=OrderStatusEnum.delivered)
+        await service.change_status(order_id=1, new_status=OrderStatusEnum.delivered, user_id=1)
 
     assert exc.value.status_code == 409
 
@@ -32,7 +33,7 @@ async def test_cancel_releases_reserve():
     allocation = SimpleNamespace(quantity=Decimal("10"))
     service, order = make_service(OrderStatusEnum.confirmed.value, [(allocation, stock)])
 
-    await service.change_status(order_id=1, new_status=OrderStatusEnum.canceled)
+    await service.change_status(order_id=1, new_status=OrderStatusEnum.canceled, user_id=1)
 
     assert order.status == "canceled"
     assert stock.reserved == Decimal("2")
@@ -44,7 +45,30 @@ async def test_delivered_writes_off_stock():
     allocation = SimpleNamespace(quantity=Decimal("10"))
     service, _ = make_service(OrderStatusEnum.in_delivery.value, [(allocation, stock)])
 
-    await service.change_status(order_id=1, new_status=OrderStatusEnum.delivered)
+    await service.change_status(order_id=1, new_status=OrderStatusEnum.delivered, user_id=1)
 
     assert stock.reserved == Decimal("0")
     assert stock.quantity == Decimal("2")
+
+
+async def test_in_delivery_requires_courier():
+    service, order = make_service(OrderStatusEnum.confirmed.value)
+    order.courier_id = None
+
+    with pytest.raises(HTTPException) as exc:
+        await service.change_status(order_id=1, new_status=OrderStatusEnum.in_delivery, user_id=1)
+
+    assert exc.value.detail == "Courier not assigned"
+
+
+async def test_delivered_records_cash_and_event():
+    service, order = make_service(OrderStatusEnum.in_delivery.value)
+
+    await service.apply_status(
+        order=order, new_status=OrderStatusEnum.delivered, user_id=5, cash_received=Decimal("90")
+    )
+
+    assert order.cash_received == Decimal("90")
+    assert order.delivered_at is not None
+    event = service.repo.add.await_args.args[0]
+    assert (event.action, event.status, event.user_id) == ("status", "delivered", 5)

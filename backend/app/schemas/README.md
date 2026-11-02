@@ -11,4 +11,7 @@ Pydantic-схемы запросов и ответов. `*In` — запрос, 
 | `pricing.py` | `PricingRuleIn`, `PricingRuleOut`, `PricingRuleSaveOut` |
 | `location.py` | `BuildingPublicOut`, `ComplexIn`, `ComplexUpdate`, `BuildingIn`, `BuildingUpdate`, `BuildingOut`, `ComplexOutAdmin`, `TariffIn`, `TariffOut` |
 | `checkout.py` | `CartItemIn`, `QuoteIn`, `QuoteLineOut`, `ServiceOut`, `QuoteOut`, `OrderCreateIn`, `OrderCreatedOut`, `OrderLinePublicOut`, `OrderPublicOut` |
-| `admin_order.py` | `OrderRowAdmin`, `OrderListOutAdmin`, `AllocationOut`, `OrderLineAdmin`, `ServiceLineAdmin`, `OrderOutAdmin`, `OrderStatusIn`, `ServiceCostIn` |
+| `admin_order.py` | `OrderRowAdmin`, `OrderListOutAdmin`, `AllocationOut`, `OrderLineAdmin`, `ServiceLineManager`, `ServiceLineAdmin`, `OrderEventOut`, `OrderOutManager`, `OrderOutAdmin`, `OrderStatusIn`, `OrderDeliveryIn`, `ServiceCostIn`, `CourierOut` |
+| `courier.py` | `CourierOrderRow`, `CourierLineOut`, `CourierOrderOut`, `CourierDeliverIn`, `CourierProblemIn` |
+| `user.py` | `UserCreateIn`, `UserUpdateIn`, `UserPasswordIn`, `UserAdminOut` |
+| `dashboard.py` | `DashboardDay`, `DashboardBuilding`, `DashboardCourier`, `DashboardOut` |

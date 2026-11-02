@@ -9,7 +9,13 @@ export default defineNuxtConfig({
   },
   // Админке не нужен серверный рендеринг: токен живёт только в браузере
   routeRules: {
+    // Кабинеты сотрудников: токен живёт только в браузере
+    '/login': { ssr: false },
+    '/admin': { ssr: false },
     '/admin/**': { ssr: false },
+    '/manager/**': { ssr: false },
+    '/courier': { ssr: false },
+    '/courier/**': { ssr: false },
     // Корзина и корпус живут в localStorage, на сервере их нет
     '/cart': { ssr: false },
     '/checkout': { ssr: false },

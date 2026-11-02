@@ -51,31 +51,32 @@ PRODUCTS = [
 # Только для локальной разработки, на сервере сотрудников создаёт scripts.create_user
 DEMO_ADMIN_LOGIN = "admin"
 DEMO_ADMIN_PASSWORD = "admin-demo-2026"
+# Логин, имя и роль; пароль у всех демо-сотрудников один
+DEMO_STAFF = [
+    (DEMO_ADMIN_LOGIN, "Администратор", UserRoleEnum.admin),
+    ("manager", "Менеджер Анна", UserRoleEnum.manager),
+    ("courier", "Курьер Сергей", UserRoleEnum.courier),
+]
 
 
-async def seed_admin(db) -> None:
-    existing = await db.execute(select(User.id).where(User.login == DEMO_ADMIN_LOGIN))
-    if existing.scalar() is not None:
-        print("Демо-администратор уже есть, пропускаем")
-        return
-    db.add(
-        User(
-            login=DEMO_ADMIN_LOGIN,
-            password_hash=hash_password(DEMO_ADMIN_PASSWORD),
-            name="Администратор",
-            role=UserRoleEnum.admin.value,
+async def seed_staff(db) -> None:
+    for login, name, role in DEMO_STAFF:
+        existing = await db.execute(select(User.id).where(User.login == login))
+        if existing.scalar() is not None:
+            continue
+        db.add(
+            User(login=login, password_hash=hash_password(DEMO_ADMIN_PASSWORD), name=name, role=role.value)
         )
-    )
+        print(f"Демо-сотрудник: {login} ({role.value})")
     # Условная наценка, чтобы импорт партнёра сразу считал цены
     if (await db.execute(select(PricingRule.id).limit(1))).scalar() is None:
         db.add(PricingRule(category_id=None, markup_percent=Decimal("20"), min_profit=Decimal("30")))
     await db.commit()
-    print(f"Демо-администратор: {DEMO_ADMIN_LOGIN}")
 
 
 async def main() -> None:
     async with AsyncSessionLocal() as db:
-        await seed_admin(db)
+        await seed_staff(db)
 
         existing = await db.execute(select(Category.id).limit(1))
         if existing.scalar() is not None:

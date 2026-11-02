@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     MEDIA_ROOT: str = "media"
     MEDIA_URL: str = "/media"
 
+    # Часовой пояс магазина: по нему считается «сегодня» у курьера и в сводке
+    TIMEZONE: str = "Europe/Moscow"
+
     # Адрес сайта для ссылок в уведомлениях
     SITE_URL: str = "http://localhost:3000"
     # Уведомления менеджеру о новых заказах, пусто — не отправляем

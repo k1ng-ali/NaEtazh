@@ -7,9 +7,12 @@ from app.services.admin_order_service import AdminOrderService
 from app.services.auth_service import AuthService
 from app.services.catalog_service import CatalogService
 from app.services.checkout_service import CheckoutService
+from app.services.courier_service import CourierService
+from app.services.dashboard_service import DashboardService
 from app.services.location_service import LocationService
 from app.services.pricing_service import PricingService
 from app.services.supplier_service import SupplierService
+from app.services.user_service import UserService
 
 
 async def get_catalog_service(db: AsyncSession = Depends(get_db)) -> CatalogService:
@@ -42,3 +45,15 @@ async def get_admin_order_service(db: AsyncSession = Depends(get_db)) -> AdminOr
 
 async def get_location_service(db: AsyncSession = Depends(get_db)) -> LocationService:
     return LocationService(db=db)
+
+
+async def get_courier_service(db: AsyncSession = Depends(get_db)) -> CourierService:
+    return CourierService(db=db)
+
+
+async def get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:
+    return UserService(db=db)
+
+
+async def get_dashboard_service(db: AsyncSession = Depends(get_db)) -> DashboardService:
+    return DashboardService(db=db)

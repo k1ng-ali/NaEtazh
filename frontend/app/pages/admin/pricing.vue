@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useAuthStore } from '~/features/admin/auth/store'
-import { useAdminCatalogStore } from '~/features/admin/catalog/store'
-import { usePricingApi } from '~/features/admin/pricing/api'
-import type { PricingRule } from '~/features/admin/pricing/types'
-import { errorMessage } from '~/features/admin/shared/errors'
-import { useToast } from '~/features/admin/shared/toast'
-import { calcSalePrice } from '~/features/admin/pricing/calc'
+import { useAuthStore } from '~/features/staff/auth/store'
+import { useAdminCatalogStore } from '~/features/staff/catalog/store'
+import { usePricingApi } from '~/features/staff/pricing/api'
+import type { PricingRule } from '~/features/staff/pricing/types'
+import { errorMessage } from '~/features/staff/shared/errors'
+import { useToast } from '~/features/staff/shared/toast'
+import { calcSalePrice } from '~/features/staff/pricing/calc'
 import { formatPrice } from '~/shared/lib/format'
 
-definePageMeta({ layout: 'admin', middleware: 'admin' })
-useHead({ title: 'Наценка | Админка' })
+definePageMeta({ layout: 'staff', middleware: 'staff', roles: ['admin'] })
+useHead({ title: 'Наценка | Кабинет' })
 
 const api = usePricingApi()
 const auth = useAuthStore()

@@ -46,3 +46,12 @@ class MissingItemPolicyEnum(str, Enum):
     replace = "replace"
     # Привезти остальное без этого товара
     skip = "skip"
+
+
+class OrderEventActionEnum(str, Enum):
+    created = "created"
+    status = "status"
+    # Назначен курьер или согласована дата
+    delivery = "delivery"
+    # Курьер сообщил о проблеме
+    problem = "problem"

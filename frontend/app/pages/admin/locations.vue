@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useAuthStore } from '~/features/admin/auth/store'
-import { useLocationsApi } from '~/features/admin/locations/api'
-import BuildingQr from '~/features/admin/locations/components/BuildingQr.vue'
-import TariffForm from '~/features/admin/locations/components/TariffForm.vue'
-import type { AdminComplex, Tariff, TariffPayload } from '~/features/admin/locations/types'
-import { errorMessage } from '~/features/admin/shared/errors'
-import { useToast } from '~/features/admin/shared/toast'
+import { useAuthStore } from '~/features/staff/auth/store'
+import { useLocationsApi } from '~/features/staff/locations/api'
+import BuildingQr from '~/features/staff/locations/components/BuildingQr.vue'
+import TariffForm from '~/features/staff/locations/components/TariffForm.vue'
+import type { AdminComplex, Tariff, TariffPayload } from '~/features/staff/locations/types'
+import { errorMessage } from '~/features/staff/shared/errors'
+import { useToast } from '~/features/staff/shared/toast'
 
-definePageMeta({ layout: 'admin', middleware: 'admin' })
-useHead({ title: 'Дома и доставка | Админка' })
+definePageMeta({ layout: 'staff', middleware: 'staff', roles: ['admin'] })
+useHead({ title: 'Дома и доставка | Кабинет' })
 
 const api = useLocationsApi()
 const auth = useAuthStore()
