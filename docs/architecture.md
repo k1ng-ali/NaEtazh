@@ -3,8 +3,8 @@
 ## Схема
 
 ```text
-Телефон покупателя ─┐
-Админка менеджера  ─┤→ nginx ─┬→ Nuxt (SSR) ──┐
+Телефон покупателя   ─┐
+Кабинеты сотрудников ─┤→ nginx ─┬→ Nuxt (SSR) ──┐
                               └→ FastAPI ←────┘
                                     │
                                 PostgreSQL
@@ -33,7 +33,9 @@ Category ── Product ─┬─ StockItem ── Warehouse
 ResidentialComplex ── Building
 
 Order ─┬─ OrderLine ── OrderAllocation
-       └─ OrderServiceLine
+       ├─ OrderServiceLine
+       ├─ OrderEvent
+       └─ User (курьер)
 ```
 
 - `Product` — товар на витрине и цена продажи, источника в нём нет.
@@ -46,6 +48,22 @@ Order ─┬─ OrderLine ── OrderAllocation
 - `OrderServiceLine` — доставка или подъём, цена для покупателя и расход клиента.
 - `Building.code` — код корпуса для QR. `cargo_lift_length_mm` нужен для предупреждения о длинных листах.
 - `Order.public_token` — случайный токен ссылки на статус. Номер заказа в ссылку не попадает.
+- `Order.courier_id`, `planned_date`, `planned_slot` — кто и когда везёт. `cash_received` —
+  сколько наличных курьер получил на месте.
+- `OrderEvent` — история заказа: создан, смена статуса, назначение доставки, проблема.
+
+## Сотрудники
+
+Три роли с общим входом `/login`, после него каждый попадает в свой кабинет:
+
+| Роль | Кабинет | API |
+|---|---|---|
+| `admin` — владелец | `/admin`: сводка, деньги, наценка, дома и тарифы, сотрудники | `/api/v1/admin` и `/api/v1/manager` |
+| `manager` — менеджер | `/manager`: заказы, курьер и дата, каталог, партнёр | `/api/v1/manager` |
+| `courier` — курьер | `/courier`: только свои доставки | `/api/v1/courier` |
+
+Права проверяет сервер. Менеджер получает заказ через схему без прибыли, курьер на чужой
+заказ получает 404. Интерфейс только прячет лишнее и перенаправляет в свой кабинет.
 
 ## Партнёр
 
@@ -61,15 +79,15 @@ Order ─┬─ OrderLine ── OrderAllocation
 ## Слои бэкенда
 
 `api` → `services` → `repositories` → `models`. Правила каждого слоя лежат в его `README.md`.
-Домены API: `platform` для покупателей, `admin` для менеджеров.
+Домены API: `platform` для покупателей, `manager`, `courier` и `admin` для сотрудников.
 
 ## Фронтенд
 
 ```text
 frontend/app/
-├── pages/         # маршруты, только композиция фич
-├── layouts/       # общий каркас
-├── features/      # catalog, cart, checkout: types, api, store, components
+├── pages/         # маршруты, только композиция фич; admin/, manager/, courier/ — кабинеты
+├── layouts/       # default — витрина, staff — владелец и менеджер, courier — курьер
+├── features/      # catalog, cart, checkout, location, staff, courier: types, api, store, components
 ├── shared/        # http и общие компоненты
 └── assets/scss/   # токены дизайна и база
 ```
