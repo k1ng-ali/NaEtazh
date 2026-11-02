@@ -200,7 +200,10 @@ async function submit() {
         <CartSummary :quote="cart.quote" :is-quoting="cart.isQuoting">
           <label class="checkout__consent">
             <input v-model="form.consent" type="checkbox" required>
-            <span>Согласен на обработку персональных данных для доставки заказа</span>
+            <span>
+              Даю <NuxtLink to="/legal/consent" target="_blank" class="checkout__doc">согласие на обработку персональных данных</NuxtLink>
+              для доставки заказа на условиях <NuxtLink to="/legal/privacy" target="_blank" class="checkout__doc">политики</NuxtLink>
+            </span>
           </label>
           <p v-if="errorText" class="error-text" role="alert">{{ errorText }}</p>
           <button
@@ -302,6 +305,10 @@ async function submit() {
       margin: 0;
       accent-color: var(--color-text);
     }
+  }
+
+  &__doc {
+    text-decoration: underline;
   }
 }
 

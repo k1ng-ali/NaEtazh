@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import CatalogSearch from '~/features/catalog/components/CatalogSearch.vue'
 import { useCartStore } from '~/features/cart/store'
+import CookieBanner from '~/features/cookies/components/CookieBanner.vue'
 import { useLocationStore } from '~/features/location/store'
+import { LEGAL_LINKS, SELLER } from '~/shared/lib/legal'
 
 const cart = useCartStore()
 const location = useLocationStore()
@@ -41,10 +43,23 @@ const route = useRoute()
     </main>
     <footer class="footer">
       <div class="container footer__inner">
-        <span>СтройБаза97</span>
-        <span>Оплата при получении наличными</span>
+        <div class="footer__row">
+          <span>{{ SELLER.shopName }}</span>
+          <span>Оплата при получении наличными</span>
+        </div>
+        <nav class="footer__links" aria-label="Документы">
+          <NuxtLink v-for="link in LEGAL_LINKS" :key="link.to" :to="link.to" class="footer__link">
+            {{ link.label }}
+          </NuxtLink>
+        </nav>
+        <p class="footer__seller">
+          {{ SELLER.legalName }}, ОГРН {{ SELLER.ogrn }}, ИНН {{ SELLER.inn }}
+        </p>
       </div>
     </footer>
+    <ClientOnly>
+      <CookieBanner />
+    </ClientOnly>
   </div>
 </template>
 
@@ -133,9 +148,31 @@ const route = useRoute()
 
   &__inner {
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__row,
+  &__links {
+    display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: 8px;
+    gap: 0 16px;
+  }
+
+  &__links {
+    justify-content: flex-start;
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-size);
+    text-decoration: underline;
+  }
+
+  &__seller {
+    font-size: 13px;
   }
 }
 
