@@ -13,9 +13,13 @@ class DashboardDay(BaseModel):
 
 
 class DashboardBuilding(BaseModel):
-    # Пусто: адрес не из подключённых домов
+    # «Другие адреса»: адрес не из подключённых домов
     name: str
+    # Все цифры — по заказам, оформленным за период
     orders: int
+    delivered: int
+    canceled: int
+    # Выручка только по доставленным
     revenue: Decimal
 
 

@@ -104,18 +104,25 @@ class DashboardRepository(BaseRepository):
 
     async def get_buildings(
         self, since: datetime, until: datetime
-    ) -> list[tuple[str | None, str | None, int, Decimal]]:
-        """Заказы по корпусам без отменённых: какие визитки работают."""
+    ) -> list[tuple[str | None, str | None, int, int, int, Decimal]]:
+        """Воронка заказов, оформленных за период, по корпусам: какие визитки работают.
+
+        Корпус, оформлено, доставлено, отменено и выручка по доставленным из них.
+        """
+        is_delivered = Order.status == OrderStatusEnum.delivered.value
         result = await self.db.execute(
-            select(ResidentialComplex.name, Building.name, func.count(Order.id), func.sum(Order.total))
+            select(
+                ResidentialComplex.name,
+                Building.name,
+                func.count(Order.id),
+                func.count(case((is_delivered, 1))),
+                func.count(case((Order.status == OrderStatusEnum.canceled.value, 1))),
+                func.coalesce(func.sum(case((is_delivered, Order.total))), 0),
+            )
             .select_from(Order)
             .outerjoin(Building, Building.id == Order.building_id)
             .outerjoin(ResidentialComplex, ResidentialComplex.id == Building.complex_id)
-            .where(
-                Order.created_at >= since,
-                Order.created_at < until,
-                Order.status != OrderStatusEnum.canceled.value,
-            )
+            .where(Order.created_at >= since, Order.created_at < until)
             .group_by(ResidentialComplex.name, Building.name)
             .order_by(func.count(Order.id).desc())
         )

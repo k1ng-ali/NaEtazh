@@ -10,6 +10,6 @@ export interface Dashboard {
   profit_complete: boolean
   avg_check: string
   days: { date: string; orders: number; revenue: string }[]
-  buildings: { name: string; orders: number; revenue: string }[]
+  buildings: { name: string; orders: number; delivered: number; canceled: number; revenue: string }[]
   couriers_today: { name: string; delivered: number; cash: string }[]
 }

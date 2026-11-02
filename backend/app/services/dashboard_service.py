@@ -58,9 +58,18 @@ class DashboardService:
                 DashboardBuilding(
                     name=f"{complex_name}, {building_name}" if complex_name else "Другие адреса",
                     orders=orders,
+                    delivered=delivered_count,
+                    canceled=canceled_count,
                     revenue=total,
                 )
-                for complex_name, building_name, orders, total in await self.repo.get_buildings(
+                for (
+                    complex_name,
+                    building_name,
+                    orders,
+                    delivered_count,
+                    canceled_count,
+                    total,
+                ) in await self.repo.get_buildings(
                     since=since, until=until
                 )
             ],

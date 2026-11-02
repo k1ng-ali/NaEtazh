@@ -93,22 +93,28 @@ onMounted(load)
         <section class="a-card">
           <h2 class="a-subtitle">Откуда заказы</h2>
           <p v-if="!data.buildings.length" class="a-muted">За период заказов нет</p>
-          <table v-else class="a-table">
-            <thead>
-              <tr>
-                <th>Дом</th>
-                <th class="a-table__num">Заказов</th>
-                <th class="a-table__num">Сумма</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in data.buildings" :key="row.name">
-                <td>{{ row.name }}</td>
-                <td class="a-table__num">{{ row.orders }}</td>
-                <td class="a-table__num">{{ formatPrice(row.revenue) }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <template v-else>
+            <table class="a-table">
+              <thead>
+                <tr>
+                  <th>Дом</th>
+                  <th class="a-table__num">Доставлено</th>
+                  <th class="a-table__num">Выручка</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in data.buildings" :key="row.name">
+                  <td>
+                    {{ row.name }}
+                    <span v-if="row.canceled" class="a-muted buildings__canceled">отменено: {{ row.canceled }}</span>
+                  </td>
+                  <td class="a-table__num">{{ row.delivered }} из {{ row.orders }}</td>
+                  <td class="a-table__num">{{ formatPrice(row.revenue) }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="a-muted buildings__hint">По заказам, оформленным за период. Выручка — только доставленные</p>
+          </template>
         </section>
 
         <section class="a-card">
@@ -193,6 +199,18 @@ onMounted(load)
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
+}
+
+.buildings {
+  &__canceled {
+    display: block;
+    font-size: 13px;
+  }
+
+  &__hint {
+    margin-top: 8px;
+    font-size: 13px;
+  }
 }
 
 @media (min-width: 1024px) {
