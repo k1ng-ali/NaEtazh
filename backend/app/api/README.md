@@ -17,7 +17,11 @@
 |---|---|
 | `GET /api/v1/categories/` | Активные категории |
 | `GET /api/v1/products/` | Товары: `category`, `search`, `skip`, `limit` |
-| `GET /api/v1/products/{slug}` | Один опубликованный товар |
+| `GET /api/v1/products/{slug}` | Один опубликованный товар с наличием |
+| `GET /api/v1/buildings/{code}` | Корпус по коду из QR |
+| `POST /api/v1/cart/quote` | Расчёт корзины: цены, наличие, доставка и подъём |
+| `POST /api/v1/orders/` | Оформить заказ, уведомление менеджеру в Telegram |
+| `GET /api/v1/orders/{token}` | Статус заказа по ссылке |
 
 ## Admin
 
@@ -45,3 +49,15 @@
 | `GET /api/v1/admin/pricing-rules/` | Правила наценки |
 | `PUT /api/v1/admin/pricing-rules/` | Создать или изменить правило и пересчитать цены |
 | `DELETE /api/v1/admin/pricing-rules/{id}` | Удалить правило |
+| `GET /api/v1/admin/orders/` | Заказы: `status`, `search` (номер, имя, телефон) |
+| `GET /api/v1/admin/orders/{id}` | Заказ с источниками товаров, расходами и прибылью |
+| `POST /api/v1/admin/orders/{id}/status` | Сменить статус: отмена снимает резерв, доставка списывает склад |
+| `PUT /api/v1/admin/orders/{id}/services/{service_id}/cost` | Наш расход на доставку или подъём |
+| `GET /api/v1/admin/complexes/` | Жилые комплексы с корпусами |
+| `POST /api/v1/admin/complexes/` | Добавить комплекс |
+| `PATCH /api/v1/admin/complexes/{id}` | Изменить комплекс |
+| `POST /api/v1/admin/complexes/{id}/buildings` | Добавить корпус, код для QR создаётся сам |
+| `PATCH /api/v1/admin/buildings/{id}` | Изменить корпус, код не меняется |
+| `GET /api/v1/admin/tariffs/` | Тарифы доставки и подъёма |
+| `PUT /api/v1/admin/tariffs/` | Создать или изменить тариф (только `admin`) |
+| `DELETE /api/v1/admin/tariffs/{id}` | Удалить тариф комплекса (только `admin`) |

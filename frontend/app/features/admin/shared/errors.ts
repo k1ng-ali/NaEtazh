@@ -20,6 +20,13 @@ const MESSAGES: Record<string, string> = {
   'Warehouse not found': 'Склад не найден',
   'Offer already linked': 'Предложение уже привязано к товару',
   'Sync already running': 'Импорт уже идёт, подождите',
+  'Order not found': 'Заказ не найден',
+  'Status change not allowed': 'Из этого статуса так перевести нельзя. Обновите страницу',
+  'Service not found': 'Услуга не найдена',
+  'Complex not found': 'Жилой комплекс не найден',
+  'Complex slug already exists': 'Такой комплекс уже есть',
+  'Building code already exists': 'Такой код корпуса уже есть',
+  'Tariff not found': 'Тариф не найден',
 }
 
 export const errorMessage = (error: unknown, fallback = 'Что-то пошло не так. Попробуйте ещё раз'): string => {

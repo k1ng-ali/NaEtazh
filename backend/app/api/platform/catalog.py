@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.deps.services import get_catalog_service
-from app.schemas.catalog import CategoryOut, ProductListOut, ProductOut
+from app.schemas.catalog import CategoryOut, ProductDetailOut, ProductListOut
 from app.services.catalog_service import CatalogService
 
 router = APIRouter(tags=["Platform • Catalog"])
@@ -23,6 +23,6 @@ async def list_products(
     return await service.list_products(category_slug=category, search=search, skip=skip, limit=limit)
 
 
-@router.get("/products/{slug}", response_model=ProductOut)
+@router.get("/products/{slug}", response_model=ProductDetailOut)
 async def get_product(slug: str, service: CatalogService = Depends(get_catalog_service)):
     return await service.get_product(slug=slug)

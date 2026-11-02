@@ -18,3 +18,31 @@ class AllocationSourceEnum(str, Enum):
 class OrderServiceTypeEnum(str, Enum):
     delivery = "delivery"
     lifting = "lifting"
+
+
+class LiftingTypeEnum(str, Enum):
+    # Покупатель поднимает сам
+    none = "none"
+    lift = "lift"
+    stairs = "stairs"
+
+
+class DeliverySlotEnum(str, Enum):
+    morning = "morning"
+    day = "day"
+    evening = "evening"
+
+
+class ContactChannelEnum(str, Enum):
+    call = "call"
+    whatsapp = "whatsapp"
+    telegram = "telegram"
+
+
+class MissingItemPolicyEnum(str, Enum):
+    # Позвонить и решить вместе
+    call = "call"
+    # Заменить аналогом той же цены или дешевле
+    replace = "replace"
+    # Привезти остальное без этого товара
+    skip = "skip"

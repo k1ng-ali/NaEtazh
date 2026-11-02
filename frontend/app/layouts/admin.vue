@@ -1,16 +1,28 @@
 <script setup lang="ts">
 import '~/assets/scss/admin.scss'
+import { ref, watch } from 'vue'
 import { useAuthStore } from '~/features/admin/auth/store'
 import AdminToasts from '~/features/admin/shared/components/AdminToasts.vue'
 
 const auth = useAuthStore()
 
+// mobile: false — пункт только в боковом меню, внизу на телефоне места на шесть вкладок нет
 const NAV = [
-  { to: '/admin/products', label: 'Товары', icon: 'M4 7l8-4 8 4-8 4-8-4zm0 0v10l8 4m-8-14l8 4m0 10l8-4V7m-8 14V11' },
-  { to: '/admin/categories', label: 'Категории', icon: 'M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z' },
-  { to: '/admin/offers', label: 'Партнёр', icon: 'M4 12h12m0 0l-4-4m4 4l-4 4M20 5v14' },
-  { to: '/admin/pricing', label: 'Наценка', icon: 'M19 5L5 19M7.5 9a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm9 9a1.5 1.5 0 100-3 1.5 1.5 0 000 3z' },
+  { to: '/admin/orders', label: 'Заказы', mobile: true, icon: 'M6 4h12l1 16H5L6 4zm3 4a3 3 0 006 0' },
+  { to: '/admin/products', label: 'Товары', mobile: true, icon: 'M4 7l8-4 8 4-8 4-8-4zm0 0v10l8 4m-8-14l8 4m0 10l8-4V7m-8 14V11' },
+  { to: '/admin/categories', label: 'Категории', mobile: false, icon: 'M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z' },
+  { to: '/admin/offers', label: 'Партнёр', mobile: true, icon: 'M4 12h12m0 0l-4-4m4 4l-4 4M20 5v14' },
+  { to: '/admin/pricing', label: 'Наценка', mobile: false, icon: 'M19 5L5 19M7.5 9a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm9 9a1.5 1.5 0 100-3 1.5 1.5 0 000 3z' },
+  { to: '/admin/locations', label: 'Дома', mobile: true, icon: 'M4 20V9l8-5 8 5v11h-5v-6H9v6H4z' },
 ]
+const MOBILE_NAV = NAV.filter((item) => item.mobile)
+// Остальные разделы на телефоне открываются из меню «Ещё»
+const MORE_NAV = NAV.filter((item) => !item.mobile)
+const isMoreOpen = ref(false)
+const route = useRoute()
+watch(() => route.path, () => {
+  isMoreOpen.value = false
+})
 
 async function logout() {
   await auth.logout()
@@ -22,7 +34,7 @@ async function logout() {
   <div class="admin">
     <!-- Десктоп: боковое меню -->
     <aside class="admin__sidebar">
-      <NuxtLink to="/admin/products" class="admin__logo">
+      <NuxtLink to="/admin/orders" class="admin__logo">
         СтройБаза97
         <span>Админка</span>
       </NuxtLink>
@@ -40,7 +52,7 @@ async function logout() {
 
     <!-- Телефон и планшет: шапка сверху, разделы снизу -->
     <header class="admin__topbar">
-      <NuxtLink to="/admin/products" class="admin__logo">СтройБаза97 <span>Админка</span></NuxtLink>
+      <NuxtLink to="/admin/orders" class="admin__logo">СтройБаза97 <span>Админка</span></NuxtLink>
       <button class="a-btn a-btn--ghost a-btn--small" type="button" @click="logout">Выйти</button>
     </header>
 
@@ -49,11 +61,27 @@ async function logout() {
     </main>
 
     <nav class="admin__tabs" aria-label="Разделы">
-      <NuxtLink v-for="item in NAV" :key="item.to" :to="item.to" class="admin__tab">
+      <NuxtLink v-for="item in MOBILE_NAV" :key="item.to" :to="item.to" class="admin__tab">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="item.icon" /></svg>
         {{ item.label }}
       </NuxtLink>
+      <button
+        class="admin__tab"
+        :class="{ 'router-link-active': MORE_NAV.some((item) => route.path.startsWith(item.to)) }"
+        type="button"
+        :aria-expanded="isMoreOpen"
+        @click="isMoreOpen = !isMoreOpen"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01" /></svg>
+        Ещё
+      </button>
     </nav>
+    <div v-if="isMoreOpen" class="admin__more">
+      <NuxtLink v-for="item in MORE_NAV" :key="item.to" :to="item.to" class="admin__more-link">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="item.icon" /></svg>
+        {{ item.label }}
+      </NuxtLink>
+    </div>
 
     <AdminToasts />
   </div>
@@ -110,7 +138,7 @@ async function logout() {
     left: 0;
     z-index: 10;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     padding-bottom: env(safe-area-inset-bottom);
     background: var(--color-surface);
     border-top: 1px solid var(--color-line);
@@ -124,11 +152,46 @@ async function logout() {
     gap: 2px;
     min-height: 60px;
     color: var(--color-text-muted);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
     font-size: 12px;
     font-weight: 500;
+    cursor: pointer;
 
     &.router-link-active {
       color: var(--color-text);
+      font-weight: 700;
+    }
+  }
+
+  &__more {
+    position: fixed;
+    right: 8px;
+    bottom: calc(68px + env(safe-area-inset-bottom));
+    z-index: 11;
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    padding: 6px;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
+  }
+
+  &__more-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: var(--tap-size);
+    padding: 0 12px;
+    border-radius: var(--radius-control);
+    font-weight: 500;
+
+    &.router-link-active {
+      background: var(--color-bg);
       font-weight: 700;
     }
   }
@@ -152,7 +215,8 @@ async function logout() {
     grid-template-columns: 240px minmax(0, 1fr);
 
     &__topbar,
-    &__tabs {
+    &__tabs,
+    &__more {
       display: none;
     }
 

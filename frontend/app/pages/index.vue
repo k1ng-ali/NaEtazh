@@ -8,7 +8,7 @@ const { data: categories, error } = await useAsyncData('home-categories', () => 
 
 <template>
   <div class="container home">
-    <CatalogSearch />
+    <CatalogSearch class="home__search" />
 
     <section class="home__section">
       <h1 class="home__title">Что вам нужно?</h1>
@@ -72,6 +72,27 @@ const { data: categories, error } = await useAsyncData('home-categories', () => 
 @media (min-width: 768px) {
   .home__grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* На десктопе поиск в шапке */
+@media (min-width: 1024px) {
+  .home__search {
+    display: none;
+  }
+
+  .home__title {
+    font-size: 28px;
+  }
+
+  .home__tile {
+    min-height: 140px;
+    padding: 20px;
+    font-size: 18px;
+
+    &:hover {
+      outline: 1.5px solid var(--color-text);
+    }
   }
 }
 </style>

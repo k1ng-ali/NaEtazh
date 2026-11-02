@@ -7,10 +7,10 @@
 - OrderServiceLine: доставка или подъём, цена и расход
 """
 
-from sqlalchemy import TIMESTAMP, BigInteger, Column, ForeignKey, Numeric, String, Text, func
+from sqlalchemy import TIMESTAMP, BigInteger, Column, Date, ForeignKey, Numeric, String, Text, func
 
 from app.core.database import Base
-from app.enums.order import OrderStatusEnum
+from app.enums.order import LiftingTypeEnum, OrderStatusEnum
 
 
 class Order(Base):
@@ -38,6 +38,15 @@ class Order(Base):
     contact_channel = Column(String, nullable=True)
     missing_item_policy = Column(String, nullable=True)
     comment = Column(Text, nullable=True)
+    lifting_type = Column(
+        String,
+        nullable=False,
+        default=LiftingTypeEnum.none.value,
+        server_default=LiftingTypeEnum.none.value,
+    )
+    # Пожелание покупателя, менеджер подтверждает по телефону
+    delivery_date = Column(Date, nullable=True)
+    delivery_slot = Column(String, nullable=True)
     # Метка QR-кода или партии визиток
     source_code = Column(String, nullable=True, index=True)
     goods_total = Column(Numeric(12, 2), nullable=False)

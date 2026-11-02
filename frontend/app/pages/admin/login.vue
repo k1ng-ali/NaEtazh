@@ -19,7 +19,7 @@ async function submit() {
   errorText.value = ''
   try {
     await auth.login({ login: form.login, password: form.password })
-    const next = typeof route.query.next === 'string' && route.query.next.startsWith('/admin') ? route.query.next : '/admin/products'
+    const next = typeof route.query.next === 'string' && route.query.next.startsWith('/admin') ? route.query.next : '/admin/orders'
     await navigateTo(next)
   } catch (error) {
     errorText.value = errorMessage(error)

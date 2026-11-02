@@ -2,6 +2,8 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict
 
+from app.enums.availability import AvailabilityEnum
+
 
 class CategoryOut(BaseModel):
     id: int
@@ -33,3 +35,8 @@ class ProductOut(BaseModel):
 class ProductListOut(BaseModel):
     items: list[ProductOut]
     total: int
+
+
+class ProductDetailOut(ProductOut):
+    # Наличие одной единицы: со склада, под заказ или нет
+    availability: AvailabilityEnum

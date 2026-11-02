@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     MEDIA_ROOT: str = "media"
     MEDIA_URL: str = "/media"
 
+    # Адрес сайта для ссылок в уведомлениях
+    SITE_URL: str = "http://localhost:3000"
+    # Уведомления менеджеру о новых заказах, пусто — не отправляем
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_CHAT_ID: str = ""
+
     @property
     def get_db_url(self) -> str:
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"

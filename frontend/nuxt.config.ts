@@ -10,6 +10,10 @@ export default defineNuxtConfig({
   // Админке не нужен серверный рендеринг: токен живёт только в браузере
   routeRules: {
     '/admin/**': { ssr: false },
+    // Корзина и корпус живут в localStorage, на сервере их нет
+    '/cart': { ssr: false },
+    '/checkout': { ssr: false },
+    '/k/**': { ssr: false },
   },
   runtimeConfig: {
     // NUXT_API_INTERNAL_URL: адрес API для серверного рендеринга
@@ -19,6 +23,8 @@ export default defineNuxtConfig({
       apiUrl: 'http://localhost:8000/api/v1',
       // NUXT_PUBLIC_MEDIA_URL: откуда брать загруженные фото, на сервере пусто (тот же домен)
       mediaUrl: 'http://localhost:8000',
+      // NUXT_PUBLIC_SITE_URL: адрес сайта для QR-кодов корпусов
+      siteUrl: 'http://localhost:3000',
     },
   },
   app: {

@@ -66,3 +66,117 @@ p {
   margin: 0 auto;
   padding-inline: 16px;
 }
+
+/* ── Элементы витрины ────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap-size);
+  padding: 0 18px;
+  border: 1.5px solid var(--color-text);
+  border-radius: var(--radius-control);
+  background: var(--color-text);
+  color: var(--color-inverse);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  &--ghost {
+    background: var(--color-surface);
+    border-color: var(--color-line);
+    color: var(--color-text);
+  }
+
+  &--block {
+    width: 100%;
+  }
+
+  &--large {
+    min-height: 52px;
+    font-size: 17px;
+  }
+}
+
+.card {
+  padding: 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &--success {
+    background: #e7f3ec;
+    color: var(--color-success);
+  }
+
+  &--warning {
+    background: #fbf0e3;
+    color: var(--color-warning);
+  }
+
+  &--danger {
+    background: #fbe9e9;
+    color: var(--color-danger);
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  &__label {
+    color: var(--color-text-muted);
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+.input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+
+  &:focus {
+    border-color: var(--color-text);
+    outline: 0;
+  }
+}
+
+textarea.input {
+  min-height: 88px;
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.error-text {
+  color: var(--color-danger);
+}

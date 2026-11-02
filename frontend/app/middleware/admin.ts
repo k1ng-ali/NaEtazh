@@ -10,5 +10,5 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!auth.isAuthenticated && !isLoginPage) {
     return navigateTo({ path: '/admin/login', query: { next: to.fullPath } })
   }
-  if (auth.isAuthenticated && isLoginPage) return navigateTo('/admin/products')
+  if (auth.isAuthenticated && isLoginPage) return navigateTo('/admin/orders')
 })

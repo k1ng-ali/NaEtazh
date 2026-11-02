@@ -32,3 +32,7 @@ export interface ProductFilters {
   skip?: number
   limit?: number
 }
+
+export interface ProductDetail extends Product {
+  availability: 'in_stock' | 'on_order' | 'unavailable'
+}
