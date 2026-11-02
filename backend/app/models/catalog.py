@@ -49,6 +49,8 @@ class Product(Base):
     # Единица продажи: мешок, лист, шт
     unit = Column(String, nullable=False, default="шт", server_default="шт")
     price = Column(Numeric(12, 2), nullable=False)
+    # false: цену пересчитывает импорт партнёра по правилам наценки
+    is_price_manual = Column(Boolean, nullable=False, default=True, server_default="true")
     # Вес и объём нужны для расчёта доставки, длина для проверки лифта
     weight_kg = Column(Numeric(10, 3), nullable=True)
     volume_m3 = Column(Numeric(10, 4), nullable=True)

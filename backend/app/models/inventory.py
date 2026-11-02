@@ -16,6 +16,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 
 from app.core.database import Base
 
@@ -58,6 +59,10 @@ class Supplier(Base):
     feed_url = Column(String, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True, server_default="true")
     last_synced_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    # Причина последнего неудачного импорта, пусто после успешного
+    last_sync_error = Column(String, nullable=True)
+    # Итог последнего успешного импорта: сколько добавлено, обновлено, скрыто
+    last_sync_summary = Column(JSONB, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
 
 
@@ -76,6 +81,11 @@ class SupplierOffer(Base):
     external_id = Column(String, nullable=False)
     name = Column(String, nullable=False)
     url = Column(String, nullable=True)
+    # Данные выгрузки для создания товара витрины
+    vendor = Column(String, nullable=True)
+    category_name = Column(String, nullable=True)
+    picture_url = Column(String, nullable=True)
+    weight_kg = Column(Numeric(10, 3), nullable=True)
     # Закупочная цена
     price = Column(Numeric(12, 2), nullable=False)
     quantity = Column(Numeric(12, 3), nullable=False, default=0, server_default="0")

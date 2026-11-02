@@ -19,9 +19,27 @@ docker compose exec backend python -m scripts.seed_demo
 ```
 
 - Сайт: http://localhost:3000
+- Админка: http://localhost:3000/admin, демо-вход создаёт `scripts/seed_demo.py` (логин и пароль в начале файла)
 - API и документация: http://localhost:8000/docs
 
 Перед первым запуском замените значения в `.env`.
+
+## Сотрудники и импорт партнёра
+
+Сотрудника создаёт скрипт, пароль спрашивается в терминале:
+
+```bash
+docker compose exec backend python -m scripts.create_user --login ivan --name "Иван" --role manager
+```
+
+Роли: `admin` — всё, включая наценку; `manager` — каталог, остатки, сопоставление.
+
+Выгрузку партнёра можно обновить кнопкой в разделе «Партнёр» или скриптом. На сервере его
+запускает cron раз в час:
+
+```cron
+0 * * * * cd /opt/stroybaza97/deploy && docker compose -f docker-compose.prod.yml exec -T backend python -m scripts.sync_suppliers
+```
 
 ## Проверки без Docker
 

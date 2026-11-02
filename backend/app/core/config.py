@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     # Ключ подписи токенов
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_MINUTES: int = 15
+    REFRESH_TOKEN_DAYS: int = 30
 
     COOKIE_SECURE: bool = True
     # Включает документацию API, на сервере выключен
@@ -19,6 +21,10 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASSWORD: str
     DB_NAME: str
+
+    # Папка загруженных фото и адрес, по которому их отдаёт nginx
+    MEDIA_ROOT: str = "media"
+    MEDIA_URL: str = "/media"
 
     @property
     def get_db_url(self) -> str:

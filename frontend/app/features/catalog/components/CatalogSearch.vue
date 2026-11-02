@@ -27,7 +27,7 @@ async function submit() {
       class="search__input"
       type="search"
       aria-label="Поиск товаров"
-      placeholder="Ротбанд, гипсокартон, саморезы"
+      placeholder="Например, Ротбанд"
     >
     <button class="search__button" type="submit">Найти</button>
   </form>

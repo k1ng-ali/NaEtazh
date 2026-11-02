@@ -6,3 +6,8 @@ alembic
 pydantic>=2
 pydantic-settings
 python-jose[cryptography]
+bcrypt
+pillow
+python-multipart
+defusedxml
+httpx

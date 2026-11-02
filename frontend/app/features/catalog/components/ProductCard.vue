@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { formatPrice } from '~/shared/lib/format'
+import { useMediaUrl } from '~/shared/lib/media'
 import type { Product } from '../types'
 
 const props = defineProps<{
   product: Product
 }>()
 
+const mediaUrl = useMediaUrl()
 const price = computed(() => formatPrice(props.product.price))
-const image = computed(() => props.product.images[0] ?? null)
+const image = computed(() => (props.product.images[0] ? mediaUrl(props.product.images[0]) : null))
 </script>
 
 <template>

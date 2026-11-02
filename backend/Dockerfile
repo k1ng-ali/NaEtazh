@@ -12,7 +12,8 @@ COPY . .
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-RUN useradd --create-home app && chown -R app:app /app
+# Папка фото создаётся заранее, чтобы том Docker получил владельца app
+RUN useradd --create-home app && mkdir -p /app/media && chown -R app:app /app
 USER app
 
 EXPOSE 8000

@@ -1,5 +1,9 @@
+import mimetypes
+from pathlib import Path
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,6 +30,13 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+
+# На сервере фото отдаёт nginx
+if DEV_MODE:
+    # В python:3.12-slim WebP не зарегистрирован
+    mimetypes.add_type("image/webp", ".webp")
+    Path(settings.MEDIA_ROOT).mkdir(parents=True, exist_ok=True)
+    app.mount(settings.MEDIA_URL, StaticFiles(directory=settings.MEDIA_ROOT), name="media")
 
 
 @app.get("/health")

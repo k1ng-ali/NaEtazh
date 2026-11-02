@@ -7,12 +7,18 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
   },
+  // Админке не нужен серверный рендеринг: токен живёт только в браузере
+  routeRules: {
+    '/admin/**': { ssr: false },
+  },
   runtimeConfig: {
     // NUXT_API_INTERNAL_URL: адрес API для серверного рендеринга
     apiInternalUrl: 'http://localhost:8000/api/v1',
     public: {
       // NUXT_PUBLIC_API_URL: адрес API для браузера
       apiUrl: 'http://localhost:8000/api/v1',
+      // NUXT_PUBLIC_MEDIA_URL: откуда брать загруженные фото, на сервере пусто (тот же домен)
+      mediaUrl: 'http://localhost:8000',
     },
   },
   app: {

@@ -10,8 +10,10 @@ from decimal import Decimal
 from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
+from app.core.security import hash_password
 from app.enums.product_status import ProductStatusEnum
-from app.models import Category, Product
+from app.enums.role import UserRoleEnum
+from app.models import Category, PricingRule, Product, User
 
 CATEGORIES = [
     ("Штукатурка", "shtukaturka"),
@@ -46,8 +48,35 @@ PRODUCTS = [
 ]
 
 
+# Только для локальной разработки, на сервере сотрудников создаёт scripts.create_user
+DEMO_ADMIN_LOGIN = "admin"
+DEMO_ADMIN_PASSWORD = "admin-demo-2026"
+
+
+async def seed_admin(db) -> None:
+    existing = await db.execute(select(User.id).where(User.login == DEMO_ADMIN_LOGIN))
+    if existing.scalar() is not None:
+        print("Демо-администратор уже есть, пропускаем")
+        return
+    db.add(
+        User(
+            login=DEMO_ADMIN_LOGIN,
+            password_hash=hash_password(DEMO_ADMIN_PASSWORD),
+            name="Администратор",
+            role=UserRoleEnum.admin.value,
+        )
+    )
+    # Условная наценка, чтобы импорт партнёра сразу считал цены
+    if (await db.execute(select(PricingRule.id).limit(1))).scalar() is None:
+        db.add(PricingRule(category_id=None, markup_percent=Decimal("20"), min_profit=Decimal("30")))
+    await db.commit()
+    print(f"Демо-администратор: {DEMO_ADMIN_LOGIN}")
+
+
 async def main() -> None:
     async with AsyncSessionLocal() as db:
+        await seed_admin(db)
+
         existing = await db.execute(select(Category.id).limit(1))
         if existing.scalar() is not None:
             print("Каталог уже заполнен, пропускаем")
