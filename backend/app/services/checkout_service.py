@@ -318,9 +318,10 @@ class CheckoutService:
 
     @staticmethod
     def _notification_text(order: Order, quote: QuoteOut, address: str) -> str:
+        # Имя и телефон покупателя в Telegram не отправляем: серверы за рубежом.
+        # Менеджер видит их в админке по ссылке
         lines = [
             f"Новый заказ № {order.id} на {quote.total:.0f} ₽",
-            f"{order.customer_name}, {order.customer_phone}",
             address,
         ]
         if order.delivery_date:

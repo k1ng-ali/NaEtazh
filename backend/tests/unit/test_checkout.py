@@ -92,3 +92,14 @@ async def test_allocate_fails_without_enough_supplier_stock():
         )
 
     assert exc.value.status_code == 409
+
+
+def test_notification_has_no_customer_name_or_phone():
+    order = SimpleNamespace(id=7, customer_name="Иван", customer_phone="+79123456789", delivery_date=None)
+    quote = SimpleNamespace(total=Decimal("5400"), lines=[])
+
+    text = CheckoutService._notification_text(order, quote, "ЖК Северный, корпус 2, кв. 45")
+
+    assert "Иван" not in text
+    assert "+79123456789" not in text
+    assert "№ 7" in text and "/manager/orders/7" in text
