@@ -1,3 +1,4 @@
+import { GOAL, reachGoal } from '~/features/analytics/metrika'
 import type { Product } from '~/features/catalog/types'
 import { useCartStore } from './store'
 
@@ -5,7 +6,7 @@ import { useCartStore } from './store'
 export const useAddToCart = () => {
   const cart = useCartStore()
 
-  return (product: Product, quantity = 1) =>
+  return (product: Product, quantity = 1) => {
     cart.add(
       {
         product_id: product.id,
@@ -17,4 +18,6 @@ export const useAddToCart = () => {
       },
       quantity,
     )
+    reachGoal(GOAL.addToCart)
+  }
 }

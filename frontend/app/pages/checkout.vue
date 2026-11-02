@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { GOAL, reachGoal } from '~/features/analytics/metrika'
 import CartSummary from '~/features/cart/components/CartSummary.vue'
 import { useCartStore } from '~/features/cart/store'
 import { useQuoteSync } from '~/features/cart/useQuoteSync'
@@ -16,6 +17,8 @@ const location = useLocationStore()
 useQuoteSync()
 
 if (!cart.items.length) await navigateTo('/cart', { replace: true })
+
+onMounted(() => reachGoal(GOAL.checkoutStart))
 
 const form = reactive({
   name: '',
@@ -69,6 +72,8 @@ async function submit() {
       source_code: location.sourceCode,
       consent: true,
     })
+    // Сумма в цели даёт доход по корпусам в отчётах Метрики
+    reachGoal(GOAL.orderCreated, { order_price: Number(cart.quote?.total ?? 0), currency: 'RUB' })
     cart.clear()
     await navigateTo(`/order/${created.public_token}?new=1`)
   } catch (error) {

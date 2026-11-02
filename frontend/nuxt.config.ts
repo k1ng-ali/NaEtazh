@@ -31,6 +31,8 @@ export default defineNuxtConfig({
       mediaUrl: 'http://localhost:8000',
       // NUXT_PUBLIC_SITE_URL: адрес сайта для QR-кодов корпусов
       siteUrl: 'http://localhost:3000',
+      // NUXT_PUBLIC_METRIKA_ID: номер счётчика Яндекс Метрики, пусто — Метрика выключена
+      metrikaId: '',
     },
   },
   app: {

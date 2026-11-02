@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { GOAL, reachGoal } from '~/features/analytics/metrika'
 import { useLocationApi } from '~/features/location/api'
 import { useLocationStore } from '~/features/location/store'
 
@@ -16,6 +17,7 @@ onMounted(async () => {
     notFound.value = true
     return
   }
+  reachGoal(GOAL.qrScan)
   await navigateTo('/', { replace: true })
 })
 
