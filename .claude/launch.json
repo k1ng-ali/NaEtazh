@@ -1,0 +1,31 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "frontend", "run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "frontend-metrika",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set NUXT_PUBLIC_METRIKA_ID=12345678&& npm --prefix frontend run dev -- --port 3002"],
+      "port": 3002
+    },
+    {
+      "name": "backend-local",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set DB_HOST=localhost&& set DB_PORT=5434&& set CORS_ORIGINS=http://localhost:3003&& backend\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --app-dir backend --port 8001"],
+      "port": 8001,
+      "autoPort": false
+    },
+    {
+      "name": "frontend-local-api",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set NUXT_PUBLIC_API_URL=http://localhost:8001/api/v1&& set NUXT_API_INTERNAL_URL=http://localhost:8001/api/v1&& set NUXT_PUBLIC_MEDIA_URL=http://localhost:8001&& npm --prefix frontend run dev -- --port 3003"],
+      "port": 3003,
+      "autoPort": false
+    }
+  ]
+}
