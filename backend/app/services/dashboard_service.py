@@ -69,9 +69,7 @@ class DashboardService:
                     delivered_count,
                     canceled_count,
                     total,
-                ) in await self.repo.get_buildings(
-                    since=since, until=until
-                )
+                ) in await self.repo.get_buildings(since=since, until=until)
             ],
             couriers_today=[
                 DashboardCourier(name=name, delivered=count, cash=cash)
