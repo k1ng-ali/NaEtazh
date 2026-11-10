@@ -22,7 +22,9 @@ async def test_admin_requires_token():
 
 
 async def test_admin_rejects_refresh_token_as_access():
-    response = await request("GET", "/api/v1/manager/products/", token=create_refresh_token(user_id=1))
+    response = await request(
+        "GET", "/api/v1/manager/products/", token=create_refresh_token(user_id=1, session_version=0)
+    )
 
     assert response.status_code == 401
 

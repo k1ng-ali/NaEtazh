@@ -38,11 +38,12 @@ def create_access_token(user_id: int, role: str) -> str:
     )
 
 
-def create_refresh_token(user_id: int) -> str:
+def create_refresh_token(user_id: int, session_version: int) -> str:
     return _create_token(
         user_id=user_id,
         token_type="refresh",
         expires_in=timedelta(days=settings.REFRESH_TOKEN_DAYS),
+        extra={"ver": session_version},
     )
 
 

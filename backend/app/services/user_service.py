@@ -41,6 +41,9 @@ class UserService:
         if data.role is not None:
             user.role = data.role.value
         if data.is_active is not None:
+            if user.is_active and not data.is_active:
+                # После повторного включения старые сессии не оживут
+                user.session_version += 1
             user.is_active = data.is_active
         await self.db.commit()
         return UserAdminOut.model_validate(user)
@@ -48,6 +51,8 @@ class UserService:
     async def set_password(self, user_id: int, password: str) -> None:
         user = await self._get_user_or_404(user_id)
         user.password_hash = hash_password(password)
+        # Все входы с прежним паролем завершатся, когда истечёт их токен доступа
+        user.session_version += 1
         await self.db.commit()
 
     async def _get_user_or_404(self, user_id: int) -> User:

@@ -31,14 +31,19 @@ class AuthService:
 
         user.last_login_at = datetime.now(timezone.utc)
         await self.db.commit()
-        return self._token_out(user), create_refresh_token(user_id=user.id)
+        return self._token_out(user), create_refresh_token(
+            user_id=user.id, session_version=user.session_version
+        )
 
     async def refresh(self, refresh_token: str | None) -> tuple[TokenOut, str]:
         payload = decode_token(refresh_token, "refresh") if refresh_token else None
         user = await self.repo.get_by_id(user_id=int(payload["sub"])) if payload else None
-        if user is None or not user.is_active:
+        # Токен, выданный до смены пароля или отключения, больше не продлевается
+        if user is None or not user.is_active or payload.get("ver") != user.session_version:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired")
-        return self._token_out(user), create_refresh_token(user_id=user.id)
+        return self._token_out(user), create_refresh_token(
+            user_id=user.id, session_version=user.session_version
+        )
 
     async def get_me(self, user_id: int) -> UserOut:
         user = await self.repo.get_by_id(user_id=user_id)
