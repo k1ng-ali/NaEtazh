@@ -17,8 +17,8 @@
 | Покупка домена, GitHub, сервер | Ждём клиента |
 | Наполнение каталога, юридические страницы, Метрика | Не начато |
 
-Код лежит в ветке `feature/staff-cabinets`, она содержит все этапы. В `main` ещё не слита,
-в GitHub не отправлена. Подробности и что ждём от клиента — в [плане](docs/plan.md).
+Все этапы слиты в `main`. Сервер собирается из ветки `release`, как — в
+[deploy/README.md](deploy/README.md). Подробности и что ждём от клиента — в [плане](docs/plan.md).
 
 - [Концепция](docs/concept.md)
 - [Архитектура](docs/architecture.md)
@@ -42,6 +42,8 @@ docker compose exec backend python -m scripts.seed_demo
 - API и документация: http://localhost:8000/docs
 
 Перед первым запуском замените значения в `.env`.
+
+Сервер, релизы, резервные копии — в [deploy/README.md](deploy/README.md).
 
 ## Кабинеты сотрудников
 

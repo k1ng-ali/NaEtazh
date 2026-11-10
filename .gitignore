@@ -26,3 +26,7 @@ dist/
 .DS_Store
 Thumbs.db
 *.log
+
+# Сервер: резервные копии и логи cron
+deploy/backups/
+deploy/logs/
