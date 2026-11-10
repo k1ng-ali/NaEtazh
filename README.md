@@ -68,7 +68,7 @@ docker compose exec backend python -m scripts.create_user --login owner --name "
 запускает cron раз в час:
 
 ```cron
-0 * * * * cd /opt/stroybaza97/deploy && docker compose -f docker-compose.prod.yml exec -T backend python -m scripts.sync_suppliers
+0 * * * * cd ~/stroybaza97/deploy && docker compose -f docker-compose.prod.yml exec -T backend python -m scripts.sync_suppliers
 ```
 
 ## Проверки без Docker

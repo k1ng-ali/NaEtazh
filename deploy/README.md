@@ -69,17 +69,18 @@ Ubuntu 22.04 или 24.04, от 2 ГБ памяти, открыты порты 2
 Со своего компьютера, из корня проекта, скопировать папку `deploy`:
 
 ```bash
-ssh root@<IP> mkdir -p /opt/stroybaza97
+ssh deploy@<IP> mkdir -p stroybaza97
 ```
 
 ```bash
-scp -r deploy root@<IP>:/opt/stroybaza97/
+scp -r deploy deploy@<IP>:stroybaza97/
 ```
 
-Дальше на сервере, под root:
+Дальше на сервере. Подойдёт root или пользователь с sudo: `setup.sh` добавит его в группу
+docker и попросит перезайти по ssh, после этого его нужно запустить ещё раз.
 
 ```bash
-cd /opt/stroybaza97/deploy && sh setup.sh <логин Docker Hub> http://stroybaza97.ru
+cd ~/stroybaza97/deploy && sh setup.sh <логин Docker Hub> http://stroybaza97.ru
 ```
 
 Если закрыты образы в Docker Hub, перед `setup.sh` выполнить `docker login`.
@@ -118,7 +119,7 @@ git push origin main:release
 Дождаться «Publish images» в Actions, потом на сервере:
 
 ```bash
-cd /opt/stroybaza97/deploy && sh update.sh
+cd ~/stroybaza97/deploy && sh update.sh
 ```
 
 Если в релизе менялись файлы самой папки `deploy` (`docker-compose.prod.yml`, `nginx/`,
@@ -141,11 +142,11 @@ tar -czf local-media.tar.gz -C backend media
 ```
 
 ```bash
-scp local.dump local-media.tar.gz root@<IP>:/opt/stroybaza97/deploy/backups/
+scp local.dump local-media.tar.gz deploy@<IP>:stroybaza97/deploy/backups/
 ```
 
 На сервере:
 
 ```bash
-cd /opt/stroybaza97/deploy && sh restore.sh backups/local.dump backups/local-media.tar.gz
+cd ~/stroybaza97/deploy && sh restore.sh backups/local.dump backups/local-media.tar.gz
 ```

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Первый запуск на чистом сервере (Ubuntu 22.04 или 24.04, под root).
+# Первый запуск на чистом сервере (Ubuntu 22.04 или 24.04, root или пользователь с sudo).
 # Ставит Docker, создаёт deploy/.env, запускает сайт и добавляет расписание.
 #
 # Запуск: sh setup.sh <логин Docker Hub> <адрес сайта>
@@ -21,6 +21,20 @@ SITE="${SITE%/}"
 if ! command -v docker >/dev/null 2>&1; then
   echo "Ставлю Docker"
   curl -fsSL https://get.docker.com | sh
+fi
+
+# Не под root Docker доступен только группе docker. Группа начинает действовать
+# после нового входа по ssh, поэтому здесь останавливаемся
+if ! docker info >/dev/null 2>&1; then
+  if [ "$(id -u)" -ne 0 ] && ! id -nG | grep -qw docker; then
+    sudo usermod -aG docker "$(id -un)"
+    echo
+    echo "Пользователь $(id -un) добавлен в группу docker."
+    echo "Выйдите с сервера, зайдите по ssh снова и повторите: sh setup.sh $HUB $SITE"
+    exit 1
+  fi
+  echo "Docker не отвечает: sudo systemctl status docker"
+  exit 1
 fi
 
 # ─── Настройки ─────────────────────────────────────────────────────────────────
