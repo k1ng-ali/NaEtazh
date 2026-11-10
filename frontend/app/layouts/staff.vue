@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue'
 import { HOME_BY_ROLE, ROLE_LABEL } from '~/features/staff/auth/roles'
 import { useAuthStore } from '~/features/staff/auth/store'
 import AdminToasts from '~/features/staff/shared/components/AdminToasts.vue'
+import BrandLogo from '~/shared/ui/BrandLogo.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -76,7 +77,7 @@ async function logout() {
     <!-- Десктоп: боковое меню -->
     <aside class="admin__sidebar">
       <NuxtLink :to="home" class="admin__logo">
-        Строй База
+        <BrandLogo />
         <span>{{ roleLabel }}</span>
       </NuxtLink>
       <nav class="admin__nav" aria-label="Разделы">
@@ -99,7 +100,7 @@ async function logout() {
 
     <!-- Телефон и планшет: шапка сверху, разделы снизу -->
     <header class="admin__topbar">
-      <NuxtLink :to="home" class="admin__logo">Строй База <span>{{ roleLabel }}</span></NuxtLink>
+      <NuxtLink :to="home" class="admin__logo"><BrandLogo /> <span>{{ roleLabel }}</span></NuxtLink>
       <button class="a-btn a-btn--ghost a-btn--small" type="button" @click="logout">Выйти</button>
     </header>
 
@@ -158,9 +159,10 @@ async function logout() {
 
   &__logo {
     display: flex;
-    align-items: baseline;
-    gap: 8px;
-    font-size: 17px;
+    align-items: center;
+    gap: 10px;
+    // Высота логотипа
+    font-size: 20px;
     font-weight: 700;
 
     span {
@@ -260,7 +262,8 @@ async function logout() {
     }
   }
 
-  svg {
+  // Иконки разделов; логотип размечен сам
+  svg:not(.brand-logo) {
     width: 22px;
     height: 22px;
     fill: none;
@@ -297,7 +300,8 @@ async function logout() {
 
       .admin__logo {
         flex-direction: column;
-        gap: 2px;
+        align-items: flex-start;
+        gap: 6px;
         padding: 0 10px;
       }
     }

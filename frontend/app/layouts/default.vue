@@ -4,6 +4,7 @@ import { useCartStore } from '~/features/cart/store'
 import CookieBanner from '~/features/cookies/components/CookieBanner.vue'
 import { useLocationStore } from '~/features/location/store'
 import { LEGAL_LINKS, SELLER } from '~/shared/lib/legal'
+import BrandLogo from '~/shared/ui/BrandLogo.vue'
 
 const cart = useCartStore()
 const location = useLocationStore()
@@ -14,7 +15,7 @@ const route = useRoute()
   <div class="layout">
     <header class="header">
       <div class="container header__inner">
-        <NuxtLink to="/" class="header__logo">Строй База</NuxtLink>
+        <NuxtLink to="/" class="header__logo"><BrandLogo /></NuxtLink>
         <!-- На десктопе поиск всегда в шапке -->
         <CatalogSearch
           class="header__search"
@@ -92,8 +93,12 @@ const route = useRoute()
 
   &__logo {
     flex-shrink: 0;
-    font-size: 18px;
-    font-weight: 700;
+    display: flex;
+    align-items: center;
+    min-height: var(--tap-size);
+    // Высота логотипа
+    font-size: 22px;
+    color: var(--color-text);
   }
 
   &__search {
@@ -176,10 +181,31 @@ const route = useRoute()
   }
 }
 
+// Узкие телефоны: логотип, «Каталог» и «Корзина» со счётчиком в одну строку
+@media (max-width: 399px) {
+  .header {
+    &__inner {
+      gap: 8px;
+    }
+
+    &__logo {
+      font-size: 18px;
+    }
+
+    &__link {
+      padding: 0 6px;
+    }
+  }
+}
+
 @media (min-width: 1024px) {
   .header {
     &__inner {
       min-height: 72px;
+    }
+
+    &__logo {
+      font-size: 28px;
     }
 
     &__search {

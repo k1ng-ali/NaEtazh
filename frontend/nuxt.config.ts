@@ -43,6 +43,12 @@ export default defineNuxtConfig({
         { name: 'description', content: 'Стройматериалы с доставкой и подъёмом в квартиру' },
         { name: 'theme-color', content: '#111111' },
       ],
+      // Значок «97» из brand/logo
+      link: [
+        { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
+        { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+      ],
     },
   },
 })

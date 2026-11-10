@@ -4,6 +4,7 @@ import { reactive, ref } from 'vue'
 import { HOME_BY_ROLE } from '~/features/staff/auth/roles'
 import { useAuthStore } from '~/features/staff/auth/store'
 import { errorMessage } from '~/features/staff/shared/errors'
+import BrandLogo from '~/shared/ui/BrandLogo.vue'
 
 definePageMeta({ layout: false, middleware: 'staff' })
 useHead({ title: 'Вход для сотрудников | Строй База', meta: [{ name: 'robots', content: 'noindex' }] })
@@ -39,7 +40,7 @@ async function submit() {
   <div class="login">
     <form class="login__card a-card" @submit.prevent="submit">
       <div>
-        <p class="login__logo">Строй База</p>
+        <BrandLogo class="login__logo" />
         <h1 class="a-title">Вход для сотрудников</h1>
       </div>
 
@@ -78,9 +79,9 @@ async function submit() {
   }
 
   &__logo {
-    margin-bottom: 4px;
-    color: var(--color-text-muted);
-    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--color-text);
+    font-size: 26px;
   }
 }
 </style>
