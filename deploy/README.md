@@ -13,7 +13,7 @@
 |---|---|---|
 | `setup.sh <логин Docker Hub> <адрес>` | Ставит Docker, создаёт `.env` с паролями, запускает сайт по http, добавляет cron | Один раз на новом сервере |
 | `ssl.sh [почта]` | Выпускает сертификат, включает https, ставит адреса сайта в `.env`, добавляет продление в cron | Один раз после `setup.sh`, когда домен указывает на сервер |
-| `update.sh` | `git pull`, копия базы, новые образы, перезапуск | После каждого релиза |
+| `update.sh` | Копия базы, `docker compose pull`, перезапуск | После каждого релиза |
 | `demo.sh` | Выгрузка партнёра и 100 товаров с фото | Для показа клиенту |
 | `backup.sh` | Копия базы и фото в `backups/`, хранит 14 последних | Каждую ночь в 3:30 по cron и перед обновлением |
 | `restore.sh <db.dump> [media.tar.gz]` | Заменяет базу и фото копией | При сбое или переносе данных |
@@ -63,11 +63,20 @@ git push origin main:release
 
 ### 3. Сервер
 
-Ubuntu 22.04 или 24.04, от 2 ГБ памяти, открыты порты 22, 80 и 443. Всё ниже — под root.
+Ubuntu 22.04 или 24.04, от 2 ГБ памяти, открыты порты 22, 80 и 443. Кода на сервере нет:
+только папка `deploy`, образы приходят из Docker Hub.
+
+Со своего компьютера, из корня проекта, скопировать папку `deploy`:
 
 ```bash
-git clone -b release https://github.com/k1ng-ali/NaEtazh.git /opt/stroybaza97
+ssh root@<IP> mkdir -p /opt/stroybaza97
 ```
+
+```bash
+scp -r deploy root@<IP>:/opt/stroybaza97/
+```
+
+Дальше на сервере, под root:
 
 ```bash
 cd /opt/stroybaza97/deploy && sh setup.sh <логин Docker Hub> http://stroybaza97.ru
@@ -111,6 +120,10 @@ git push origin main:release
 ```bash
 cd /opt/stroybaza97/deploy && sh update.sh
 ```
+
+Если в релизе менялись файлы самой папки `deploy` (`docker-compose.prod.yml`, `nginx/`,
+скрипты), перед `update.sh` скопировать её заново той же командой `scp`. `deploy/.env`,
+копии и логи на сервере при этом не затираются: в репозитории их нет.
 
 ## Перенос данных с компьютера разработчика
 
