@@ -76,7 +76,7 @@ async function logout() {
     <!-- Десктоп: боковое меню -->
     <aside class="admin__sidebar">
       <NuxtLink :to="home" class="admin__logo">
-        СтройБаза97
+        Строй База
         <span>{{ roleLabel }}</span>
       </NuxtLink>
       <nav class="admin__nav" aria-label="Разделы">
@@ -99,7 +99,7 @@ async function logout() {
 
     <!-- Телефон и планшет: шапка сверху, разделы снизу -->
     <header class="admin__topbar">
-      <NuxtLink :to="home" class="admin__logo">СтройБаза97 <span>{{ roleLabel }}</span></NuxtLink>
+      <NuxtLink :to="home" class="admin__logo">Строй База <span>{{ roleLabel }}</span></NuxtLink>
       <button class="a-btn a-btn--ghost a-btn--small" type="button" @click="logout">Выйти</button>
     </header>
 

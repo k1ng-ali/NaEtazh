@@ -38,7 +38,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'ru' },
-      title: 'СтройБаза97',
+      title: 'Строй База',
       meta: [
         { name: 'description', content: 'Стройматериалы с доставкой и подъёмом в квартиру' },
         { name: 'theme-color', content: '#111111' },

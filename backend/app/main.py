@@ -14,7 +14,7 @@ from app.core.database import get_db
 DEV_MODE = settings.DEV_MODE
 
 app = FastAPI(
-    title="StroyBaza97 API",
+    title="StroyBaza API",
     version="0.1.0",
     docs_url="/docs" if DEV_MODE else None,
     redoc_url="/redoc" if DEV_MODE else None,

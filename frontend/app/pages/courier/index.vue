@@ -7,7 +7,7 @@ import { errorMessage } from '~/features/staff/shared/errors'
 import { formatPrice } from '~/shared/lib/format'
 
 definePageMeta({ layout: 'courier', middleware: 'staff', roles: ['courier'] })
-useHead({ title: 'Доставки | СтройБаза97' })
+useHead({ title: 'Доставки | Строй База' })
 
 // Менеджер может назначить заказ в любой момент, список обновляется сам
 const REFRESH_MS = 60_000

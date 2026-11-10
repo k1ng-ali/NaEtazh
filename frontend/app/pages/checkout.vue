@@ -9,7 +9,7 @@ import { CONTACT_CHANNEL, DELIVERY_SLOT, LIFTING, MISSING_ITEM_POLICY } from '~/
 import type { ContactChannel, DeliverySlot, MissingItemPolicy } from '~/features/checkout/types'
 import { useLocationStore } from '~/features/location/store'
 
-useHead({ title: 'Оформление заказа | СтройБаза97' })
+useHead({ title: 'Оформление заказа | Строй База' })
 
 const api = useCheckoutApi()
 const cart = useCartStore()

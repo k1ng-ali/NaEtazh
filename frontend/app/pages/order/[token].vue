@@ -24,7 +24,7 @@ const deliveryDate = computed(() =>
 )
 
 useHead(() => ({
-  title: order.value ? `Заказ № ${order.value.number} | СтройБаза97` : 'Заказ | СтройБаза97',
+  title: order.value ? `Заказ № ${order.value.number} | Строй База` : 'Заказ | Строй База',
   // Страница по личной ссылке, поисковикам её не показываем
   meta: [{ name: 'robots', content: 'noindex' }],
 }))

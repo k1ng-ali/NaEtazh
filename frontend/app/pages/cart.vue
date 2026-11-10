@@ -7,7 +7,7 @@ import { useCartStore } from '~/features/cart/store'
 import { useQuoteSync } from '~/features/cart/useQuoteSync'
 import { useLocationStore } from '~/features/location/store'
 
-useHead({ title: 'Корзина | СтройБаза97' })
+useHead({ title: 'Корзина | Строй База' })
 
 const cart = useCartStore()
 const location = useLocationStore()

@@ -21,7 +21,7 @@ onMounted(async () => {
   await navigateTo('/', { replace: true })
 })
 
-useHead({ title: 'СтройБаза97', meta: [{ name: 'robots', content: 'noindex' }] })
+useHead({ title: 'Строй База', meta: [{ name: 'robots', content: 'noindex' }] })
 </script>
 
 <template>

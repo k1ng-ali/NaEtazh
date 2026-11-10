@@ -6,7 +6,7 @@ import { useAuthStore } from '~/features/staff/auth/store'
 import { errorMessage } from '~/features/staff/shared/errors'
 
 definePageMeta({ layout: false, middleware: 'staff' })
-useHead({ title: 'Вход для сотрудников | СтройБаза97', meta: [{ name: 'robots', content: 'noindex' }] })
+useHead({ title: 'Вход для сотрудников | Строй База', meta: [{ name: 'robots', content: 'noindex' }] })
 
 // Возвращаем только на страницы кабинетов, чтобы ссылка входа не уводила на чужой сайт
 const STAFF_PREFIXES = ['/admin', '/manager', '/courier']
@@ -39,7 +39,7 @@ async function submit() {
   <div class="login">
     <form class="login__card a-card" @submit.prevent="submit">
       <div>
-        <p class="login__logo">СтройБаза97</p>
+        <p class="login__logo">Строй База</p>
         <h1 class="a-title">Вход для сотрудников</h1>
       </div>
 

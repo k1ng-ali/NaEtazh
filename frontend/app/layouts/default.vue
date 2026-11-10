@@ -14,7 +14,7 @@ const route = useRoute()
   <div class="layout">
     <header class="header">
       <div class="container header__inner">
-        <NuxtLink to="/" class="header__logo">СтройБаза97</NuxtLink>
+        <NuxtLink to="/" class="header__logo">Строй База</NuxtLink>
         <!-- На десктопе поиск всегда в шапке -->
         <CatalogSearch
           class="header__search"

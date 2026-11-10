@@ -36,7 +36,7 @@ function add() {
 }
 
 useHead(() => ({
-  title: product.value ? `${product.value.name} | СтройБаза97` : 'СтройБаза97',
+  title: product.value ? `${product.value.name} | Строй База` : 'Строй База',
   meta: [{ name: 'description', content: product.value?.description?.slice(0, 160) ?? product.value?.name ?? '' }],
 }))
 </script>

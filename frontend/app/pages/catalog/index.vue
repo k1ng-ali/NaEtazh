@@ -27,7 +27,7 @@ onMounted(() => {
   isMounted.value = true
 })
 
-useHead({ title: 'Каталог | СтройБаза97' })
+useHead({ title: 'Каталог | Строй База' })
 </script>
 
 <template>

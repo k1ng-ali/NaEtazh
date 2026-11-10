@@ -121,7 +121,7 @@ async def download_photo(client: httpx.AsyncClient, url: str) -> str | None:
 async def main() -> int:
     created_total = 0
     async with AsyncSessionLocal() as db, httpx.AsyncClient(
-        timeout=20, follow_redirects=True, headers={"User-Agent": "StroyBaza97 demo import"}
+        timeout=20, follow_redirects=True, headers={"User-Agent": "StroyBaza demo import"}
     ) as client:
         supplier = await db.scalar(select(Supplier).where(Supplier.code == SUPPLIER_CODE))
         if supplier is None:
