@@ -4,21 +4,26 @@
 кладёт их в Docker Hub → на сервере `update.sh` скачивает образы и перезапускает сайт.
 Миграции базы применяются сами при старте backend.
 
-Пока домена нет, сайт открывается по IP сервера по http. HTTPS подключается после покупки
-домена `stroybaza97.ru`.
+Сайт работает на `https://stroybaza97.ru`. Сертификат Let's Encrypt выпускает и продлевает
+`ssl.sh`. Запросы по http, по IP и на `www` перенаправляются на `https://stroybaza97.ru`.
 
 ## Скрипты
 
 | Скрипт | Что делает | Когда |
 |---|---|---|
-| `setup.sh <логин Docker Hub> <адрес>` | Ставит Docker, создаёт `.env` с паролями, запускает сайт, добавляет cron | Один раз на новом сервере |
+| `setup.sh <логин Docker Hub> <адрес>` | Ставит Docker, создаёт `.env` с паролями, запускает сайт по http, добавляет cron | Один раз на новом сервере |
+| `ssl.sh [почта]` | Выпускает сертификат, включает https, ставит адреса сайта в `.env`, добавляет продление в cron | Один раз после `setup.sh`, когда домен указывает на сервер |
 | `update.sh` | `git pull`, копия базы, новые образы, перезапуск | После каждого релиза |
 | `demo.sh` | Выгрузка партнёра и 100 товаров с фото | Для показа клиенту |
 | `backup.sh` | Копия базы и фото в `backups/`, хранит 14 последних | Каждую ночь в 3:30 по cron и перед обновлением |
 | `restore.sh <db.dump> [media.tar.gz]` | Заменяет базу и фото копией | При сбое или переносе данных |
 
-Cron, который ставит `setup.sh`: выгрузка партнёра раз в час и ночная копия. Логи —
+Cron: выгрузка партнёра раз в час, копия в 3:30, продление сертификата в 4:15. Логи —
 в `deploy/logs/`.
+
+Настройки nginx лежат в `nginx/`: `http.conf` для первого запуска, `https.conf` после
+`ssl.sh`, общие правила в `locations.conf` и `zones.conf`. Какой сайт включён, задаёт
+`NGINX_SITE` в `.env`.
 
 ## Первый запуск
 
@@ -44,21 +49,38 @@ git push origin main:release
 Во вкладке Actions должны пройти «CI» и «Publish images». В Docker Hub появятся
 `<логин>/stroybaza97-backend` и `<логин>/stroybaza97-frontend`.
 
-### 2. Сервер
+### 2. Домен
 
-Ubuntu 22.04 или 24.04, от 2 ГБ памяти, открыты порты 22 и 80. Всё ниже — под root.
+У регистратора домена в DNS добавить A-записи на IP сервера:
+
+| Имя | Тип | Значение |
+|---|---|---|
+| `@` (`stroybaza97.ru`) | A | IP сервера |
+| `www` | A | IP сервера |
+
+Записи расходятся от нескольких минут до нескольких часов. Проверка с любого компьютера:
+`nslookup stroybaza97.ru` должен показать IP сервера.
+
+### 3. Сервер
+
+Ubuntu 22.04 или 24.04, от 2 ГБ памяти, открыты порты 22, 80 и 443. Всё ниже — под root.
 
 ```bash
 git clone -b release https://github.com/k1ng-ali/NaEtazh.git /opt/stroybaza97
 ```
 
 ```bash
-cd /opt/stroybaza97/deploy && sh setup.sh <логин Docker Hub> http://<IP сервера>
+cd /opt/stroybaza97/deploy && sh setup.sh <логин Docker Hub> http://stroybaza97.ru
 ```
 
-Если репозиторий закрытый, `git clone` спросит логин и токен GitHub (Settings → Developer
-settings → Personal access tokens, право Contents: Read). Если закрыты образы в Docker Hub,
-перед `setup.sh` выполнить `docker login`.
+Если закрыты образы в Docker Hub, перед `setup.sh` выполнить `docker login`.
+
+Когда `nslookup` показывает IP сервера, включить HTTPS. Почта нужна для писем Let's Encrypt,
+если сертификат не продлится. Запуская скрипт, вы принимаете условия Let's Encrypt:
+
+```bash
+sh ssl.sh <почта>
+```
 
 Создать владельца, пароль спросит в терминале:
 
@@ -72,8 +94,11 @@ docker compose -f docker-compose.prod.yml exec backend python -m scripts.create_
 sh demo.sh
 ```
 
-Дальше владелец заходит на `http://<IP>/login`, добавляет ЖК и корпуса в разделе «Дома»,
-менеджера и курьера в разделе «Сотрудники».
+Дальше владелец заходит на `https://stroybaza97.ru/login`, добавляет ЖК и корпуса в разделе
+«Дома», менеджера и курьера в разделе «Сотрудники».
+
+Если DNS ещё не обновился, а показать нужно сейчас, сайт уже открывается по
+`http://<IP сервера>`. После `ssl.sh` такой адрес будет перенаправлять на домен.
 
 ## Обновление
 
@@ -111,10 +136,3 @@ scp local.dump local-media.tar.gz root@<IP>:/opt/stroybaza97/deploy/backups/
 ```bash
 cd /opt/stroybaza97/deploy && sh restore.sh backups/local.dump backups/local-media.tar.gz
 ```
-
-## После покупки домена
-
-1. A-запись `stroybaza97.ru` и `www` на IP сервера.
-2. HTTPS через certbot и блок `listen 443` в `nginx.conf`.
-3. В `deploy/.env`: адрес `https://stroybaza97.ru` в `CORS_ORIGINS`, `SITE_URL`,
-   `NUXT_PUBLIC_SITE_URL`, и `COOKIE_SECURE=true`. Потом `sh update.sh`.

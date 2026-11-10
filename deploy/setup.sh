@@ -45,7 +45,8 @@ sh update.sh
 
 # ─── Расписание ────────────────────────────────────────────────────────────────
 # Выгрузка партнёра раз в час, резервная копия каждую ночь. Старые строки проекта заменяются
-CRON_MARK="# stroybaza97"
+# Метка своя у каждого скрипта: строки продления сертификата из ssl.sh не трогаем
+CRON_MARK="# stroybaza97-app"
 {
   crontab -l 2>/dev/null | grep -v "$CRON_MARK" || true
   echo "0 * * * * cd $DIR && docker compose -f docker-compose.prod.yml exec -T backend python -m scripts.sync_suppliers >> $DIR/logs/sync.log 2>&1 $CRON_MARK"
@@ -57,3 +58,4 @@ echo "Готово, сайт: $SITE"
 echo "Создайте владельца (пароль спросит в терминале):"
 echo "  cd $DIR && docker compose -f docker-compose.prod.yml exec backend python -m scripts.create_user --login owner --name \"Имя\" --role admin"
 echo "Демо-каталог для показа: sh demo.sh"
+echo "HTTPS, когда домен указывает на сервер: sh ssl.sh <почта>"
