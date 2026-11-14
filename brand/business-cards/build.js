@@ -409,6 +409,30 @@ variants.push({
       T(SERVICES_CAPTION, cx, 44.6, { font: 'medium', size: 2.0, anchor: 'middle', maxWidth: qs + 4 });
   },
 });
+// 6. Оранжевый с фото Портера: лицевая как у варианта 3, на обратной — белая плашка с фото и QR
+variants.push({
+  name: 'Оранжевый с фото Портера', orient: 'h',
+  note: 'Лицевая как у варианта 3. На обратной — белая плашка с фото грузовика и QR.',
+  front() { return variants[2].front(); },
+  back() {
+    const panelX = 57.5, panelW = 32, cx = panelX + panelW / 2;
+    const pnlY = 4.5, pnlH = 45;
+    const qs = 19, pw = 29;
+    const ph = photo('porter.png', cx - pw / 2, 5.3, pw, PORTER_CROP);
+    const q = qr(SERVICES_URL, cx - qs / 2, 26.6, qs);
+    const rows = SERVICES.map((s, i) => {
+      const y = ROW0 + 0.3 + i * ROW_STEP;
+      return `<circle cx="${L + 0.85}" cy="${r3(y - 1.05)}" r="0.85" fill="${WH}"/>` +
+        T(s, L + 3.2, y, { font: 'semibold', size: ROW_SIZE + 0.05, fill: WH });
+    }).join('');
+    return rect(0, 0, H_.W, H_.H, OR) +
+      rect(panelX, pnlY, panelW, pnlH, WH, 1.8) + ph.svg + q.svg +
+      T('Услуги', L, 12.0, { font: 'brand', size: 6.0, fill: WH }) +
+      rows +
+      T(SERVICES_CAPTION, L, 39.4, { font: 'semibold', size: 2.3, fill: WH, maxWidth: panelX - L - 4 }) +
+      phoneWithName(SERVICES_PHONE, SERVICES_NAME, L, 44.6, { size: 4.4, fill: WH, maxWidth: panelX - L - 3 });
+  },
+});
 // Кадр фото Портера в assets/porter.png (1024×768): машина с тенью
 const PORTER_CROP = [100, 100, 860, 560];
 
