@@ -24,9 +24,9 @@ const PHONE = '+7 (962) 925-87-87';
 const PHONE_NAME = 'Содык';
 const PHONE_LABEL = 'Заказы по телефону';
 const TAGLINE = ['Стройматериалы с доставкой', 'и подъёмом в квартиру'];
-const SERVICES = ['Доставка грузов', 'Заезд / выезд', 'Вынос мусора', 'Демонтаж', 'Сухие стяжки'];
+const SERVICES = ['Доставка грузов', 'Подъём грузов', 'Заезд / выезд', 'Вынос мусора', 'Демонтаж', 'Сухие стяжки'];
 // Список услуг на горизонтальной визитке: первая строка и шаг (мм)
-const ROW0 = 17.5, ROW_STEP = 4.25, ROW_SIZE = 2.85;
+const ROW0 = 16.4, ROW_STEP = 3.6, ROW_SIZE = 2.65;
 const SERVICES_CTA = 'Заявка на сайте или по телефону';
 const SERVICES_NAME = 'Фазил';
 const SERVICES_PHONE = '+7 (903) 542-35-82';
@@ -231,10 +231,11 @@ const BRANDS = [
   { file: 'moment.svg', k: 1.3 },
   { file: 'unis.svg', k: 1.0 },
   { file: 'dulux.svg', k: 0.6 },
+  { file: 'rusean.svg', k: 0.85 },
 ];
 // Строка логотипов в полосе [x0, x1], по центру высоты yc; высота не больше hMax.
-function brandRow(x0, x1, yc, hMax, { gapMin = 1.6, gapMax = 11 } = {}) {
-  const items = BRANDS.map((b) => {
+function brandRow(x0, x1, yc, hMax, { gapMin = 1.6, gapMax = 11, list = BRANDS } = {}) {
+  const items = list.map((b) => {
     const src = fs.readFileSync(path.join(BRANDS_DIR, b.file), 'utf8');
     const [, , vw, vh] = src.match(/viewBox="([^"]+)"/)[1].split(/\s+/).map(Number);
     return { ...b, a: vw / vh };
@@ -294,7 +295,7 @@ variants.push({
       { body: OR, rib: WH, cab: GR, glass: LINE, seam: MUTED, chassis: INK, tire: INK, hub: LINE, lamp: OR, bg: WH }, { flip: true });
     const rows = SERVICES.map((s, i) => {
       const y = ROW0 + i * ROW_STEP;
-      return rect(L, y - 1.95, 1.6, 1.6, OR, 0.35) + T(s, L + 3.4, y, { font: 'semibold', size: ROW_SIZE });
+      return rect(L, y - 1.8, 1.45, 1.45, OR, 0.3) + T(s, L + 3.2, y, { font: 'semibold', size: ROW_SIZE });
     }).join('');
     return rect(0, 0, H_.W, H_.H, WH) +
       T('Услуги', L, 11.7, { font: 'brand', size: 5.6 }) +
@@ -332,7 +333,7 @@ variants.push({
     const q = qr(SERVICES_URL, qx + 4 * m, TOP + 4 * m, qs, { tile: true });
     const rows = SERVICES.map((s, i) => {
       const y = ROW0 + i * ROW_STEP;
-      return plateNum(i, L, y, 2.8) + T(s, L + 5.3, y, { font: 'semibold', size: ROW_SIZE, fill: WH });
+      return plateNum(i, L, y, 2.55) + T(s, L + 4.9, y, { font: 'semibold', size: ROW_SIZE, fill: WH });
     }).join('');
     return rect(0, 0, H_.W, H_.H, GR) +
       T('Услуги', L, 11.7, { font: 'brand', size: 5.6, fill: OR }) +
@@ -370,7 +371,7 @@ variants.push({
     const q = qr(SERVICES_URL, cx - qs / 2, TOP + 4 * m - 1.4, qs, { tile: true, tileR: 1.6 });
     const rows = SERVICES.map((s, i) => {
       const y = ROW0 + 0.3 + i * ROW_STEP;
-      return `<circle cx="${L + 0.85}" cy="${r3(y - 1.05)}" r="0.85" fill="${WH}"/>` +
+      return `<circle cx="${L + 0.75}" cy="${r3(y - 0.95)}" r="0.75" fill="${WH}"/>` +
         T(s, L + 3.2, y, { font: 'semibold', size: ROW_SIZE + 0.05, fill: WH });
     }).join('');
     const tw = outer - 2;
@@ -401,16 +402,17 @@ variants.push({
       T(`${PHONE_LABEL}, ${PHONE_NAME}`, cx, 68.4, { size: 2.1, fill: MUTED, anchor: 'middle' }) +
       T(PHONE, cx, 74.2, { font: 'brand', size: 4.3, anchor: 'middle', maxWidth: VR - VL }) +
       rect(VL, 77.6, VR - VL, 0.25, LINE) +
-      brandRow(VL, VR, 82.6, 4.6, { gapMin: 1.3 });
+      brandRow(VL, VR, 80.9, 3.8, { gapMax: 5, list: BRANDS.slice(0, 3) }) +
+      brandRow(VL, VR, 85.7, 3.8, { gapMax: 5, list: BRANDS.slice(3) });
   },
   back() {
     const cx = V_.W / 2;
     const q = qr(SERVICES_URL, cx - 10, 50.4, 20);
     const rows = SERVICES.map((s, i) => {
-      const y = 21.4 + i * 5.4;
+      const y = 20.8 + i * 4.6;
       return T(`0${i + 1}`, VL, y, { font: 'brand', size: 2.5, fill: OR }) +
-        T(s, VL + 6.5, y, { font: 'semibold', size: 2.95 }) +
-        rect(VL, y + 1.9, VR - VL, 0.25, LINE);
+        T(s, VL + 6.5, y, { font: 'semibold', size: 2.8 }) +
+        rect(VL, y + 1.6, VR - VL, 0.25, LINE);
     }).join('');
     return rect(0, 0, V_.W, V_.H, WH) +
       T('Услуги', VL, 13.4, { font: 'brand', size: 5.4 }) +
@@ -435,7 +437,7 @@ variants.push({
     const px = qx - 3 - pw, py = 13.2;
     const rows = SERVICES.map((s, i) => {
       const y = ROW0 + i * ROW_STEP;
-      return rect(L, y - 1.95, 1.6, 1.6, OR, 0.35) + T(s, L + 3.4, y, { font: 'semibold', size: ROW_SIZE });
+      return rect(L, y - 1.8, 1.45, 1.45, OR, 0.3) + T(s, L + 3.2, y, { font: 'semibold', size: ROW_SIZE });
     }).join('');
     return rect(0, 0, H_.W, H_.H, WH) +
       photo('porter.png', px, py, pw, PORTER_CROP).svg +
@@ -461,7 +463,7 @@ variants.push({
     const q = qr(SERVICES_URL, cx - qs / 2, 26.6, qs);
     const rows = SERVICES.map((s, i) => {
       const y = ROW0 + 0.3 + i * ROW_STEP;
-      return `<circle cx="${L + 0.85}" cy="${r3(y - 1.05)}" r="0.85" fill="${WH}"/>` +
+      return `<circle cx="${L + 0.75}" cy="${r3(y - 0.95)}" r="0.75" fill="${WH}"/>` +
         T(s, L + 3.2, y, { font: 'semibold', size: ROW_SIZE + 0.05, fill: WH });
     }).join('');
     return rect(0, 0, H_.W, H_.H, OR) +
