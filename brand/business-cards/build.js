@@ -108,8 +108,9 @@ const rect = (x, y, w, h, fill, rx = 0) =>
 
 // Логотип вставляется из brand/logo/svg как есть, только масштаб и сдвиг
 const logoCache = {};
-function logo(file, x, y, { w, h }) {
-  const src = logoCache[file] || (logoCache[file] = fs.readFileSync(path.join(LOGO_DIR, file), 'utf8'));
+function logo(file, x, y, { w, h }, dir = LOGO_DIR) {
+  const key = path.join(dir, file);
+  const src = logoCache[key] || (logoCache[key] = fs.readFileSync(key, 'utf8'));
   const [vx, vy, vw, vh] = src.match(/viewBox="([^"]+)"/)[1].split(/\s+/).map(Number);
   const inner = src.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '').replace(/<title>[\s\S]*?<\/title>/, '');
   const s = w ? w / vw : h / vh;
@@ -221,6 +222,37 @@ function photo(file, x, y, w, crop, fade = 0.08) {
   return { svg: `<image x="${r3(x)}" y="${r3(y)}" width="${r3(w)}" height="${r3(h)}" href="${uri}"/>`, h, dpi: cw / (w / 25.4) };
 }
 
+// Логотипы брендов, которые продаёт магазин (assets/brands, взяты с сайтов производителей
+// и Wikimedia Commons). Порядок — как просил клиент; k — оптическая поправка высоты.
+const BRANDS_DIR = path.join(ROOT, 'assets', 'brands');
+const BRANDS = [
+  { file: 'knauf.svg', k: 1.0 },
+  { file: 'tikkurila.svg', k: 1.0 },
+  { file: 'moment.svg', k: 1.3 },
+  { file: 'unis.svg', k: 1.0 },
+  { file: 'dulux.svg', k: 0.6 },
+];
+// Строка логотипов в полосе [x0, x1], по центру высоты yc; высота не больше hMax.
+function brandRow(x0, x1, yc, hMax, { gapMin = 1.6, gapMax = 11 } = {}) {
+  const items = BRANDS.map((b) => {
+    const src = fs.readFileSync(path.join(BRANDS_DIR, b.file), 'utf8');
+    const [, , vw, vh] = src.match(/viewBox="([^"]+)"/)[1].split(/\s+/).map(Number);
+    return { ...b, a: vw / vh };
+  });
+  const unit = items.reduce((s, it) => s + it.a * it.k, 0); // ширина ряда при высоте 1
+  const n = items.length;
+  const h = Math.min(hMax, (x1 - x0 - (n - 1) * gapMin) / unit);
+  const gap = Math.min(gapMax, (x1 - x0 - h * unit) / (n - 1));
+  let x = (x0 + x1) / 2 - (h * unit + gap * (n - 1)) / 2;
+  let svg = '';
+  for (const it of items) {
+    const ih = h * it.k;
+    svg += logo(it.file, x, yc - ih / 2, { h: ih }, BRANDS_DIR).svg;
+    x += it.a * ih + gap;
+  }
+  return svg;
+}
+
 // Телефон и имя после него на одной базовой линии; оба ужимаются, чтобы влезть в maxWidth
 function phoneWithName(phone, name, x, y, { size, fill, nameFill, maxWidth, anchor = 'start' }) {
   const gap = 0.35;
@@ -242,15 +274,18 @@ variants.push({
   note: 'Белый фон, графитовый текст, оранжевые акценты. Ближе всего к сайту.',
   front() {
     const lg = logo('logo-horizontal.svg', L, TOP, { w: 40 });
-    const q = qr(SITE_URL, R - 22, 15.2, 22);
+    const qs = 20;
+    const q = qr(SITE_URL, R - qs, 9.4, qs);
     return rect(0, 0, H_.W, H_.H, WH) + lg.svg +
-      T(TAGLINE[0], L, 18.6, { font: 'medium', size: 2.55 }) +
-      T(TAGLINE[1], L, 22.2, { font: 'medium', size: 2.55 }) +
-      rect(L, 25.4, 8, 0.7, OR) +
-      T(PHONE_LABEL, L, 38.9, { size: 2.15, fill: MUTED }) +
-      phoneWithName(PHONE, PHONE_NAME, L, 44.6, { size: 4.7, fill: GR, nameFill: MUTED, maxWidth: R - 22 - L - 6.5 }) +
+      T(TAGLINE[0], L, 17.2, { font: 'medium', size: 2.5 }) +
+      T(TAGLINE[1], L, 20.7, { font: 'medium', size: 2.5 }) +
+      rect(L, 23.6, 8, 0.7, OR) +
+      T(PHONE_LABEL, L, 30.9, { size: 2.1, fill: MUTED }) +
+      phoneWithName(PHONE, PHONE_NAME, L, 36.4, { size: 4.6, fill: GR, nameFill: MUTED, maxWidth: R - qs - L - 6.5 }) +
       q.svg +
-      T(DOMAIN, R - 11, 44.6, { font: 'semibold', size: 2.75, anchor: 'middle', maxWidth: 24 });
+      T(DOMAIN, R - qs / 2, 36.4, { font: 'semibold', size: 2.6, anchor: 'middle', maxWidth: qs + 4 }) +
+      rect(L, 39.6, R - L, 0.25, LINE) +
+      brandRow(L + 1, R - 1, 44.3, 5.2);
   },
   back() {
     const qs = 20, m = qs / 29, qx = R - qs, cx = qx + qs / 2;
@@ -277,17 +312,18 @@ variants.push({
   name: 'Тёмный', orient: 'h',
   note: 'Графитовый фон под обрез, белый текст, оранжевый телефон. QR на белой плашке слева.',
   front() {
-    const qs = 20, m = qs / 29;
+    const qs = 19, m = qs / 29;
     const q = qr(SITE_URL, L + 4 * m, TOP + 4 * m, qs, { tile: true });
-    const cx = L + q.outer / 2, x2 = L + q.outer + 6;
+    const cx = L + q.outer / 2, x2 = L + q.outer + 6, band = 39.6;
     return rect(0, 0, H_.W, H_.H, GR) + q.svg +
-      T(DOMAIN, cx, 36.4, { font: 'semibold', size: 2.7, fill: WH, anchor: 'middle', maxWidth: q.outer }) +
-      T('каталог и цены на сайте', cx, 40.0, { size: 2.05, fill: MUTED_DK, anchor: 'middle', maxWidth: q.outer }) +
+      T(DOMAIN, cx, 34.6, { font: 'semibold', size: 2.6, fill: WH, anchor: 'middle', maxWidth: q.outer }) +
       logo('logo-horizontal-inverse.svg', x2, TOP, { w: R - x2 }).svg +
-      T(TAGLINE[0], x2, 19.4, { font: 'medium', size: 2.55, fill: WH }) +
-      T(TAGLINE[1], x2, 23.0, { font: 'medium', size: 2.55, fill: WH }) +
-      T(PHONE_LABEL, x2, 38.9, { size: 2.15, fill: MUTED_DK }) +
-      phoneWithName(PHONE, PHONE_NAME, x2, 44.6, { size: 4.6, fill: OR, nameFill: MUTED_DK, maxWidth: R - x2 });
+      T(TAGLINE[0], x2, 17.4, { font: 'medium', size: 2.5, fill: WH }) +
+      T(TAGLINE[1], x2, 20.9, { font: 'medium', size: 2.5, fill: WH }) +
+      T(PHONE_LABEL, x2, 29.2, { size: 2.1, fill: MUTED_DK }) +
+      phoneWithName(PHONE, PHONE_NAME, x2, 34.6, { size: 4.5, fill: OR, nameFill: MUTED_DK, maxWidth: R - x2 }) +
+      rect(0, band, H_.W, H_.H - band, WH) +
+      brandRow(L + 1, R - 1, 45.4, 5.0);
   },
   back() {
     const qs = 20, m = qs / 29;
@@ -313,19 +349,20 @@ variants.push({
 // 3. Акцент на QR: крупный код на оранжевой панели под обрез, обратная сторона целиком оранжевая
 variants.push({
   name: 'Акцент на QR', orient: 'h',
-  note: 'Крупный QR 24 мм на оранжевой панели. Обратная сторона оранжевая, белый текст.',
+  note: 'QR на оранжевой панели. Обратная сторона оранжевая, белый текст.',
   front() {
-    const panelX = 55, qs = 24, m = qs / 29, outer = qs + 8 * m;
+    const panelX = 55, qs = 21, m = qs / 29, outer = qs + 8 * m, band = 39.6;
     const cx = (panelX + H_.W - BLEED) / 2;
     const q = qr(SITE_URL, cx - qs / 2, TOP + 4 * m - 1.4, qs, { tile: true, tileR: 1.6 });
-    return rect(0, 0, H_.W, H_.H, WH) + rect(panelX, 0, H_.W - panelX, H_.H, OR) + q.svg +
-      T(SCAN_HINT, cx, 43.0, { font: 'semibold', size: 2.45, fill: WH, anchor: 'middle', maxWidth: outer }) +
-      T('и откройте каталог', cx, 46.4, { font: 'semibold', size: 2.45, fill: WH, anchor: 'middle', maxWidth: outer }) +
-      logo('logo-stacked.svg', L, TOP, { w: 30 }).svg +
-      T(TAGLINE[0], L, 26.4, { font: 'medium', size: 2.5 }) +
-      T(TAGLINE[1], L, 29.9, { font: 'medium', size: 2.5 }) +
-      T(DOMAIN, L, 37.2, { font: 'semibold', size: 3.0, fill: OR }) +
-      phoneWithName(PHONE, PHONE_NAME, L, 44.6, { size: 4.5, fill: GR, nameFill: MUTED, maxWidth: panelX - L - 3 });
+    return rect(0, 0, H_.W, H_.H, WH) + rect(panelX, 0, H_.W - panelX, band, OR) + q.svg +
+      T(SCAN_HINT, cx, 35.4, { font: 'semibold', size: 2.3, fill: WH, anchor: 'middle', maxWidth: outer }) +
+      logo('logo-stacked.svg', L, TOP, { w: 26 }).svg +
+      T(TAGLINE[0], L, 22.8, { font: 'medium', size: 2.4 }) +
+      T(TAGLINE[1], L, 26.1, { font: 'medium', size: 2.4 }) +
+      T(DOMAIN, L, 30.9, { font: 'semibold', size: 2.8, fill: OR }) +
+      phoneWithName(PHONE, PHONE_NAME, L, 36.4, { size: 4.3, fill: GR, nameFill: MUTED, maxWidth: panelX - L - 3 }) +
+      rect(L, band - 0.25, panelX - L, 0.25, LINE) +
+      brandRow(L + 1, R - 1, 45.4, 5.0);
   },
   back() {
     const panelX = 55, qs = 24, m = qs / 29, outer = qs + 8 * m;
@@ -352,17 +389,19 @@ variants.push({
   name: 'Минимализм, вертикальная', orient: 'v',
   note: 'Вертикальная 50×90, белый фон, всё по центру. Оранжевый только в табличке и номерах.',
   front() {
-    const cx = V_.W / 2, lw = 30, lh = lw / logoAspect('logo-stacked.svg');
-    const q = qr(SITE_URL, cx - 11, 38.6, 22);
+    const cx = V_.W / 2, lw = 28, lh = lw / logoAspect('logo-stacked.svg');
+    const q = qr(SITE_URL, cx - 10, 33.2, 20);
     return rect(0, 0, V_.W, V_.H, WH) +
-      logo('logo-stacked.svg', cx - lw / 2, VT + 3, { w: lw }).svg +
-      T(TAGLINE[0], cx, VT + 3 + lh + 6.2, { font: 'medium', size: 2.3, fill: MUTED, anchor: 'middle' }) +
-      T(TAGLINE[1], cx, VT + 3 + lh + 9.4, { font: 'medium', size: 2.3, fill: MUTED, anchor: 'middle' }) +
+      logo('logo-stacked.svg', cx - lw / 2, VT + 1, { w: lw }).svg +
+      T(TAGLINE[0], cx, VT + 1 + lh + 5.4, { font: 'medium', size: 2.2, fill: MUTED, anchor: 'middle' }) +
+      T(TAGLINE[1], cx, VT + 1 + lh + 8.4, { font: 'medium', size: 2.2, fill: MUTED, anchor: 'middle' }) +
       q.svg +
-      T(DOMAIN, cx, 68.0, { font: 'semibold', size: 2.9, anchor: 'middle' }) +
-      rect(cx - 3, 72.4, 6, 0.6, OR) +
-      T(`${PHONE_LABEL}, ${PHONE_NAME}`, cx, 79.2, { size: 2.1, fill: MUTED, anchor: 'middle' }) +
-      T(PHONE, cx, 85.2, { font: 'brand', size: 4.3, anchor: 'middle', maxWidth: VR - VL });
+      T(DOMAIN, cx, 59.0, { font: 'semibold', size: 2.8, anchor: 'middle' }) +
+      rect(cx - 3, 62.4, 6, 0.6, OR) +
+      T(`${PHONE_LABEL}, ${PHONE_NAME}`, cx, 68.4, { size: 2.1, fill: MUTED, anchor: 'middle' }) +
+      T(PHONE, cx, 74.2, { font: 'brand', size: 4.3, anchor: 'middle', maxWidth: VR - VL }) +
+      rect(VL, 77.6, VR - VL, 0.25, LINE) +
+      brandRow(VL, VR, 82.6, 4.6, { gapMin: 1.3 });
   },
   back() {
     const cx = V_.W / 2;
@@ -440,8 +479,13 @@ const PORTER_CROP = [100, 100, 860, 560];
 function cmyk(result, raw) {
   const key = (raw || '').trim().toUpperCase();
   if (key === 'NONE' || key === '') return result;
-  if (!CMYK[key]) throw new Error(`Нет CMYK для цвета ${raw}`);
-  return [CMYK[key].slice(), result ? result[1] : 1];
+  if (CMYK[key]) return [CMYK[key].slice(), result ? result[1] : 1];
+  // Цвета логотипов брендов: простой перевод RGB → CMYK
+  if (!result || !/^#[0-9A-F]{6}$/.test(key)) throw new Error(`Нет CMYK для цвета ${raw}`);
+  const [r, g, b] = result[0].map((v) => v / 255);
+  const k = 1 - Math.max(r, g, b);
+  const c = k < 1 ? (1 - r - k) / (1 - k) : 0, m = k < 1 ? (1 - g - k) / (1 - k) : 0, yy = k < 1 ? (1 - b - k) / (1 - k) : 0;
+  return [[c, m, yy, k].map((v) => Math.round(v * 100)), result[1]];
 }
 function writePdf(file, pages, title) {
   return new Promise((resolve, reject) => {
