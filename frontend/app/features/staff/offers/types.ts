@@ -6,6 +6,8 @@ export interface SyncSummary {
   updated: number
   hidden: number
   prices_updated: number
+  // Есть, когда товары партнёра на витрине
+  products_created?: number
 }
 
 export interface Supplier {
@@ -14,6 +16,7 @@ export interface Supplier {
   name: string
   feed_url: string | null
   is_active: boolean
+  show_on_storefront: boolean
   last_synced_at: string | null
   last_sync_error: string | null
   last_sync_summary: SyncSummary | null
@@ -25,6 +28,11 @@ export interface SupplierSyncResult {
   ok: boolean
   error: string | null
   supplier: Supplier
+}
+
+export interface SupplierStorefrontResult {
+  supplier: Supplier
+  products_created: number
 }
 
 export interface Offer {

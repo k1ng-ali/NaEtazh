@@ -11,6 +11,7 @@ from app.services.courier_service import CourierService
 from app.services.dashboard_service import DashboardService
 from app.services.location_service import LocationService
 from app.services.pricing_service import PricingService
+from app.services.service_catalog_service import ServiceCatalogService
 from app.services.supplier_service import SupplierService
 from app.services.user_service import UserService
 
@@ -57,3 +58,7 @@ async def get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:
 
 async def get_dashboard_service(db: AsyncSession = Depends(get_db)) -> DashboardService:
     return DashboardService(db=db)
+
+
+async def get_service_catalog_service(db: AsyncSession = Depends(get_db)) -> ServiceCatalogService:
+    return ServiceCatalogService(db=db)

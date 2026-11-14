@@ -27,11 +27,14 @@ const ICONS = {
   offers: 'M4 12h12m0 0l-4-4m4 4l-4 4M20 5v14',
   pricing: 'M19 5L5 19M7.5 9a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm9 9a1.5 1.5 0 100-3 1.5 1.5 0 000 3z',
   locations: 'M4 20V9l8-5 8 5v11h-5v-6H9v6H4z',
+  requests: 'M8 4h8v3H8zM6 6H5v15h14V6h-1M9 12h6m-6 4h4',
+  services: 'M14 6l4 4-9 9H5v-4l9-9zm-2 2l4 4',
   users: 'M16 19v-1a4 4 0 00-8 0v1m4-8a3 3 0 100-6 3 3 0 000 6zm6 8v-1a3 3 0 00-2-2.8M18 5.2a3 3 0 010 5.6',
 }
 
 const MANAGER_NAV: NavItem[] = [
   { to: '/manager/orders', label: 'Заказы', icon: ICONS.orders, mobile: true },
+  { to: '/manager/requests', label: 'Заявки', icon: ICONS.requests, mobile: true },
   { to: '/manager/products', label: 'Товары', icon: ICONS.products, mobile: true },
   { to: '/manager/offers', label: 'Партнёр', icon: ICONS.offers, mobile: true },
   { to: '/manager/categories', label: 'Категории', icon: ICONS.categories, mobile: true },
@@ -41,11 +44,13 @@ const MANAGER_NAV: NavItem[] = [
 const ADMIN_NAV: NavItem[] = [
   { to: '/admin', label: 'Сводка', icon: ICONS.dashboard, mobile: true, exact: true },
   { to: '/manager/orders', label: 'Заказы', icon: ICONS.orders, mobile: true },
+  { to: '/manager/requests', label: 'Заявки', icon: ICONS.requests, mobile: true },
   { to: '/manager/products', label: 'Товары', icon: ICONS.products, mobile: true },
-  { to: '/admin/locations', label: 'Дома', icon: ICONS.locations, mobile: true },
+  { to: '/admin/locations', label: 'Дома', icon: ICONS.locations, mobile: false },
   { to: '/manager/offers', label: 'Партнёр', icon: ICONS.offers, mobile: false },
   { to: '/manager/categories', label: 'Категории', icon: ICONS.categories, mobile: false },
   { to: '/admin/pricing', label: 'Наценка', icon: ICONS.pricing, mobile: false },
+  { to: '/admin/services', label: 'Услуги', icon: ICONS.services, mobile: false },
   { to: '/admin/users', label: 'Сотрудники', icon: ICONS.users, mobile: false },
 ]
 

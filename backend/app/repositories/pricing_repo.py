@@ -1,7 +1,7 @@
 from sqlalchemy import select
 
 from app.models.catalog import Product
-from app.models.inventory import SupplierOffer
+from app.models.inventory import Supplier, SupplierOffer
 from app.models.pricing import PricingRule
 from app.repositories.base_repo import BaseRepository
 
@@ -44,17 +44,46 @@ class PricingRepository(BaseRepository):
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def get_best_offers(self, product_ids: list[int]) -> dict[int, SupplierOffer]:
-        """Предложение партнёра, от которого считаем цену: сначала с остатком, затем дешевле."""
+    async def get_best_offers(
+        self, product_ids: list[int], storefront_only: bool = False
+    ) -> dict[int, SupplierOffer]:
+        """
+        Предложение партнёра, от которого считаем цену: сначала с остатком, затем дешевле.
+
+        storefront_only: только поставщики, включённые на витрине, — из них можно продавать.
+        """
         if not product_ids:
             return {}
-        result = await self.db.execute(
-            select(SupplierOffer)
-            .where(
-                SupplierOffer.product_id.in_(product_ids),
-                SupplierOffer.is_active == True,  # noqa: E712
+        query = select(SupplierOffer).where(
+            SupplierOffer.product_id.in_(product_ids),
+            SupplierOffer.is_active == True,  # noqa: E712
+        )
+        if storefront_only:
+            query = query.join(Supplier, Supplier.id == SupplierOffer.supplier_id).where(
+                Supplier.is_active == True,  # noqa: E712
+                Supplier.show_on_storefront == True,  # noqa: E712
             )
-            .distinct(SupplierOffer.product_id)
-            .order_by(SupplierOffer.product_id, (SupplierOffer.quantity > 0).desc(), SupplierOffer.price)
+        result = await self.db.execute(
+            query.distinct(SupplierOffer.product_id).order_by(
+                SupplierOffer.product_id, (SupplierOffer.quantity > 0).desc(), SupplierOffer.price
+            )
         )
         return {offer.product_id: offer for offer in result.scalars().all()}
+
+    async def get_sellable_offers(self, products: list[Product]) -> dict[int, SupplierOffer]:
+        """
+        Предложения, из которых можно продавать покупателю.
+
+        Поставщик включён на витрине, а цена товара задана вручную или посчитана по наценке:
+        без правила наценки автоматическая цена равна закупочной.
+        """
+        offers = await self.get_best_offers([product.id for product in products], storefront_only=True)
+        if not offers:
+            return {}
+        rule_categories = {rule.category_id for rule in await self.get_rules()}
+        priced = {
+            product.id
+            for product in products
+            if product.is_price_manual or None in rule_categories or product.category_id in rule_categories
+        }
+        return {product_id: offer for product_id, offer in offers.items() if product_id in priced}

@@ -22,7 +22,8 @@ const route = useRoute()
           :value="typeof route.query.search === 'string' ? route.query.search : ''"
         />
         <nav class="header__nav" aria-label="Основное меню">
-          <NuxtLink to="/catalog" class="header__link">Каталог</NuxtLink>
+          <NuxtLink to="/catalog" class="header__link header__link--catalog">Каталог</NuxtLink>
+          <NuxtLink to="/services" class="header__link">Услуги</NuxtLink>
           <NuxtLink to="/cart" class="header__link header__cart">
             Корзина
             <ClientOnly>
@@ -181,7 +182,14 @@ const route = useRoute()
   }
 }
 
-// Узкие телефоны: логотип, «Каталог» и «Корзина» со счётчиком в одну строку
+// Телефоны: разделы каталога и так на главной, в шапке остаются «Услуги» и «Корзина»
+@media (max-width: 479px) {
+  .header__link--catalog {
+    display: none;
+  }
+}
+
+// Узкие телефоны: логотип, «Услуги» и «Корзина» со счётчиком в одну строку
 @media (max-width: 399px) {
   .header {
     &__inner {

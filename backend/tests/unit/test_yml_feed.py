@@ -8,7 +8,9 @@ FEED = """<?xml version="1.0" encoding="windows-1251"?>
 <yml_catalog date="2026-11-02 10:00">
   <shop>
     <categories>
-      <category id="418">Газобетон</category>
+      <category id="4">Общестроительные материалы</category>
+      <category id="418" parentId="4">Газобетон</category>
+      <category id="">Без id</category>
     </categories>
     <offers>
       <offer id="00-1" available="true">
@@ -42,21 +44,31 @@ FEED = """<?xml version="1.0" encoding="windows-1251"?>
 
 
 def test_parse_yml_reads_offers_in_cp1251():
-    offers = parse_yml(FEED)
+    offers = parse_yml(FEED).offers
 
     assert [offer.external_id for offer in offers] == ["00-1", "00-2"]
     first = offers[0]
     assert first.name == "Газобетонный блок D-500"
     assert first.vendor is None
     assert first.category_name == "Газобетон"
+    assert first.category_external_id == "418"
     assert first.picture_url == "https://famarket.ru/1.jpg"
     assert first.price == Decimal("142.00")
     assert first.quantity == Decimal("1304.000")
     assert first.weight_kg == Decimal("15.750")
 
 
+def test_parse_yml_reads_category_tree():
+    categories = parse_yml(FEED).categories
+
+    assert [(c.external_id, c.parent_external_id, c.name) for c in categories] == [
+        ("4", None, "Общестроительные материалы"),
+        ("418", "4", "Газобетон"),
+    ]
+
+
 def test_parse_yml_negative_count_is_zero():
-    offers = parse_yml(FEED)
+    offers = parse_yml(FEED).offers
 
     assert offers[1].price == Decimal("99.50")
     assert offers[1].quantity == Decimal("0")

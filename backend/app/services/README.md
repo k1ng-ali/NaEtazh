@@ -8,7 +8,9 @@
 | `catalog_service.py` | `list_categories`, `list_products`, `get_product` |
 | `auth_service.py` | `login`, `refresh`, `get_me`, `create_user` |
 | `admin_catalog_service.py` | `list_categories`, `create_category`, `update_category`, `delete_category`, `list_products`, `get_product`, `create_product`, `update_product`, `add_product_image`, `list_warehouses`, `set_stock` |
-| `supplier_service.py` | `list_suppliers`, `sync_supplier`, `sync_all`, `list_offers`, `link_offer`, `unlink_offer`, `create_product_from_offer` |
+| `supplier_service.py` | `list_suppliers`, `sync_supplier`, `sync_all`, `set_storefront`, `list_offers`, `link_offer`, `unlink_offer`, `create_product_from_offer` |
+| `service_catalog_service.py` | `list_services`, `get_service`, `create_request`, `list_requests`, `set_request_status`, `list_services_admin`, `create_service`, `update_service` |
+| `partner_catalog_service.py` | `save_categories`, `category_resolver`, `create_products`, `fill_missing_photos` |
 | `pricing_service.py` | `list_rules`, `save_rule`, `delete_rule`, `recalc_prices` (без `commit`, вызывается из других сервисов) |
 | `checkout_service.py` | `get_building`, `quote`, `create_order`, `get_public_order` |
 | `admin_order_service.py` | `list_orders`, `get_order`, `list_couriers`, `change_status`, `apply_status`, `set_delivery`, `set_service_cost`, `add_problem` |

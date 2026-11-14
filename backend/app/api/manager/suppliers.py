@@ -10,6 +10,8 @@ from app.schemas.supplier import (
     OfferMatchFilterEnum,
     OfferOut,
     SupplierOut,
+    SupplierStorefrontIn,
+    SupplierStorefrontOut,
     SupplierSyncOut,
 )
 from app.services.supplier_service import SupplierService
@@ -25,6 +27,15 @@ async def list_suppliers(service: SupplierService = Depends(get_supplier_service
 @router.post("/suppliers/{supplier_id}/sync", response_model=SupplierSyncOut)
 async def sync_supplier(supplier_id: int, service: SupplierService = Depends(get_supplier_service)):
     return await service.sync_supplier(supplier_id=supplier_id)
+
+
+@router.patch("/suppliers/{supplier_id}/storefront", response_model=SupplierStorefrontOut)
+async def set_supplier_storefront(
+    supplier_id: int,
+    data: SupplierStorefrontIn,
+    service: SupplierService = Depends(get_supplier_service),
+):
+    return await service.set_storefront(supplier_id=supplier_id, enabled=data.show_on_storefront)
 
 
 @router.get("/offers/", response_model=OfferListOut)

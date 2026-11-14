@@ -17,8 +17,10 @@ from app.schemas.supplier import (
     OfferListOut,
     OfferOut,
     SupplierOut,
+    SupplierStorefrontOut,
     SupplierSyncOut,
 )
+from app.services.partner_catalog_service import PartnerCatalogService
 from app.services.pricing_service import PricingService
 
 FEED_TIMEOUT_SECONDS = 60
@@ -27,7 +29,17 @@ MAX_FEED_BYTES = 50 * 1024 * 1024
 MIN_FEED_SHARE = 0.5
 MIN_OFFERS_FOR_SHARE_CHECK = 100
 
-_SYNC_FIELDS = ("name", "url", "vendor", "category_name", "picture_url", "weight_kg", "price", "quantity")
+_SYNC_FIELDS = (
+    "name",
+    "url",
+    "vendor",
+    "category_name",
+    "category_external_id",
+    "picture_url",
+    "weight_kg",
+    "price",
+    "quantity",
+)
 
 
 async def download_feed(url: str) -> bytes:
@@ -68,7 +80,9 @@ class SupplierService:
             content = await download_feed(supplier.feed_url)
             feed = await run_in_threadpool(parse_yml, content)
             existing = await self.repo.get_supplier_offers(supplier_id=supplier_id)
-            self._check_feed_size(feed=feed, active_before=sum(1 for offer in existing if offer.is_active))
+            self._check_feed_size(
+                feed=feed.offers, active_before=sum(1 for offer in existing if offer.is_active)
+            )
         except (httpx.HTTPError, FeedError) as exc:
             supplier.last_sync_error = self._error_text(exc)
             await self.db.commit()
@@ -80,8 +94,12 @@ class SupplierService:
             await self.db.rollback()
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Sync already running") from exc
 
-        summary = self._apply_feed(supplier_id=supplier_id, feed=feed, existing=existing)
+        catalog = PartnerCatalogService(db=self.db)
+        await catalog.save_categories(supplier_id=supplier_id, categories=feed.categories)
+        summary = self._apply_feed(supplier_id=supplier_id, feed=feed.offers, existing=existing)
         await self.db.flush()
+        if supplier.show_on_storefront:
+            summary["products_created"] = await catalog.create_products(supplier=supplier)
         summary["prices_updated"] = await PricingService(db=self.db).recalc_prices()
 
         supplier.last_synced_at = datetime.now(timezone.utc)
@@ -95,6 +113,26 @@ class SupplierService:
         return [
             await self.sync_supplier(supplier_id) for supplier_id in await self.repo.get_active_supplier_ids()
         ]
+
+    async def set_storefront(self, supplier_id: int, enabled: bool) -> SupplierStorefrontOut:
+        """
+        Включает или выключает товары поставщика на витрине.
+
+        При включении сразу заводит товары для всех предложений, фото догрузит импорт по
+        расписанию. При выключении товары остаются, покупатель их просто не видит.
+        """
+        supplier = await self._get_supplier_or_404(supplier_id)
+        supplier.show_on_storefront = enabled
+        created = 0
+        if enabled:
+            created = await PartnerCatalogService(db=self.db).create_products(supplier=supplier)
+            await PricingService(db=self.db).recalc_prices()
+        await self.db.commit()
+        rows = await self.repo.get_suppliers_with_counts()
+        supplier, active, unmatched = next(row for row in rows if row[0].id == supplier_id)
+        return SupplierStorefrontOut(
+            supplier=self._supplier_out(supplier, active, unmatched), products_created=created
+        )
 
     # ─── Предложения и сопоставление ──────────────────────────────────────────
 
@@ -137,7 +175,7 @@ class SupplierService:
         return self._offer_out(offer, None)
 
     async def create_product_from_offer(self, offer_id: int, category_id: int) -> OfferCreateProductOut:
-        """Черновик товара витрины из предложения. Фото партнёра не копируем без его разрешения."""
+        """Черновик товара витрины из предложения. Фото добавит импорт по расписанию."""
         offer = await self._get_offer_or_404(offer_id)
         if offer.product_id is not None:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Offer already linked")

@@ -19,6 +19,13 @@ class FeedError(ValueError):
 
 
 @dataclass
+class FeedCategory:
+    external_id: str
+    name: str
+    parent_external_id: str | None = None
+
+
+@dataclass
 class FeedOffer:
     external_id: str
     name: str
@@ -28,8 +35,15 @@ class FeedOffer:
     url: str | None = None
     vendor: str | None = None
     category_name: str | None = None
+    category_external_id: str | None = None
     picture_url: str | None = None
     weight_kg: Decimal | None = None
+
+
+@dataclass
+class YmlFeed:
+    categories: list[FeedCategory]
+    offers: list[FeedOffer]
 
 
 def clean_name(name: str) -> str:
@@ -52,8 +66,8 @@ def _decimal(value: str | None) -> Decimal | None:
     return number if number.is_finite() else None
 
 
-def parse_yml(content: bytes) -> list[FeedOffer]:
-    """Предложения из выгрузки. Строки без id, названия или цены пропускаются."""
+def parse_yml(content: bytes) -> YmlFeed:
+    """Дерево категорий и предложения. Строки без id, названия или цены пропускаются."""
     try:
         root = fromstring(content)
     except (ParseError, DefusedXmlException) as exc:
@@ -63,7 +77,15 @@ def parse_yml(content: bytes) -> list[FeedOffer]:
     if shop is None:
         raise FeedError("В выгрузке нет раздела <shop>")
 
-    categories = {item.get("id"): (item.text or "").strip() for item in shop.iterfind("categories/category")}
+    categories: dict[str, FeedCategory] = {}
+    for item in shop.iterfind("categories/category"):
+        category_id = (item.get("id") or "").strip()
+        name = " ".join((item.text or "").split())
+        if category_id and name:
+            parent_id = (item.get("parentId") or "").strip() or None
+            categories[category_id] = FeedCategory(
+                external_id=category_id, name=name[:250], parent_external_id=parent_id
+            )
     offers: list[FeedOffer] = []
     for item in shop.iterfind("offers/offer"):
         external_id = (item.get("id") or "").strip()
@@ -74,6 +96,7 @@ def parse_yml(content: bytes) -> list[FeedOffer]:
 
         quantity = _decimal(_text(item, "count")) or Decimal("0")
         weight = _decimal(_text(item, "weight"))
+        category = categories.get(_text(item, "categoryId") or "")
         offers.append(
             FeedOffer(
                 external_id=external_id,
@@ -84,9 +107,10 @@ def parse_yml(content: bytes) -> list[FeedOffer]:
                 url=_text(item, "url"),
                 # Собственная марка партнёра тоже выдаёт источник
                 vendor=clean_name(_text(item, "vendor") or "") or None,
-                category_name=categories.get(_text(item, "categoryId")),
+                category_name=category.name if category else None,
+                category_external_id=category.external_id if category else None,
                 picture_url=_text(item, "picture"),
                 weight_kg=weight.quantize(Decimal("0.001")) if weight is not None and weight > 0 else None,
             )
         )
-    return offers
+    return YmlFeed(categories=list(categories.values()), offers=offers)

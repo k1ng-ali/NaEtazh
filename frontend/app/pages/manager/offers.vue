@@ -30,6 +30,7 @@ const search = ref('')
 const inStock = ref(true)
 const skip = ref(0)
 const isSyncing = ref(false)
+const isSwitching = ref(false)
 const busyOfferId = ref<number | null>(null)
 const errorText = ref('')
 
@@ -74,6 +75,23 @@ async function sync() {
     toast.error(errorMessage(error))
   } finally {
     isSyncing.value = false
+  }
+}
+
+async function toggleStorefront(enabled: boolean) {
+  if (!supplier.value) return
+  isSwitching.value = true
+  try {
+    const result = await api.setStorefront(supplier.value.id, enabled)
+    supplier.value = result.supplier
+    if (!enabled) toast.success('Товары партнёра скрыты с витрины')
+    else if (result.products_created) toast.success(`Добавлено на витрину: ${result.products_created}`)
+    else toast.success('Товары партнёра на витрине')
+    await loadOffers()
+  } catch (error) {
+    toast.error(errorMessage(error))
+  } finally {
+    isSwitching.value = false
   }
 }
 
@@ -167,6 +185,32 @@ onMounted(async () => {
       <button class="a-btn" type="button" :disabled="isSyncing" @click="sync">
         {{ isSyncing ? 'Загружаем выгрузку…' : 'Обновить выгрузку' }}
       </button>
+    </section>
+
+    <section v-if="supplier" class="a-card">
+      <label class="a-switch">
+        <input
+          type="checkbox"
+          role="switch"
+          :checked="supplier.show_on_storefront"
+          :disabled="isSwitching || !supplier.last_synced_at"
+          @change="toggleStorefront(($event.target as HTMLInputElement).checked)"
+        >
+        <span class="a-switch__track" aria-hidden="true" />
+        <span class="a-switch__label">
+          {{ isSwitching ? 'Добавляем товары…' : 'Товары партнёра на витрине' }}
+        </span>
+      </label>
+      <p class="a-muted">
+        <template v-if="supplier.show_on_storefront">
+          Каждый товар выгрузки заведён на витрине, новые добавляются при обновлении. Покупатель видит товары
+          в наличии, если владелец задал наценку. Фото докачиваются раз в час.
+        </template>
+        <template v-else>
+          Включите, чтобы все товары партнёра появились на витрине в разделах как у партнёра. Видны будут только
+          те, что в наличии, и только после того, как владелец задаст наценку. Выключить можно в любой момент.
+        </template>
+      </p>
     </section>
 
     <div class="filters">

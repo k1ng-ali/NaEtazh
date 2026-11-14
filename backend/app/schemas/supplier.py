@@ -17,6 +17,7 @@ class SupplierOut(BaseModel):
     name: str
     feed_url: str | None = None
     is_active: bool
+    show_on_storefront: bool
     last_synced_at: datetime | None = None
     last_sync_error: str | None = None
     last_sync_summary: dict | None = None
@@ -30,6 +31,15 @@ class SupplierSyncOut(BaseModel):
     ok: bool
     error: str | None = None
     supplier: SupplierOut
+
+
+class SupplierStorefrontIn(BaseModel):
+    show_on_storefront: bool
+
+
+class SupplierStorefrontOut(BaseModel):
+    supplier: SupplierOut
+    products_created: int
 
 
 class OfferOut(BaseModel):

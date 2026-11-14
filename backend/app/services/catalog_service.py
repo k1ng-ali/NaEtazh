@@ -14,8 +14,20 @@ class CatalogService:
         self.repo = CatalogRepository(db=db)
 
     async def list_categories(self) -> list[CategoryOut]:
-        items = await self.repo.get_active_categories()
-        return [CategoryOut.model_validate(item) for item in items]
+        """Включённые разделы, где есть что купить, вместе с их родителями."""
+        categories = await self.repo.get_active_categories()
+        by_id = {category.id: category for category in categories}
+        visible: set[int] = set()
+        for category_id in await self.repo.get_visible_category_ids():
+            # Подраздел выключенного раздела не показываем
+            chain, current = [], by_id.get(category_id)
+            while current is not None:
+                chain.append(current.id)
+                if current.parent_id is None:
+                    visible.update(chain)
+                    break
+                current = by_id.get(current.parent_id)
+        return [CategoryOut.model_validate(item) for item in categories if item.id in visible]
 
     async def list_products(
         self,
@@ -39,7 +51,7 @@ class CatalogService:
 
         # Покупатель видит только «в наличии» или «под заказ», источник не раскрываем
         stock = await OrderRepository(db=self.db).get_stock_available([product.id])
-        offers = await PricingRepository(db=self.db).get_best_offers([product.id])
+        offers = await PricingRepository(db=self.db).get_sellable_offers([product])
         offer = offers.get(product.id)
         if stock.get(product.id, 0) > 0:
             availability = AvailabilityEnum.in_stock

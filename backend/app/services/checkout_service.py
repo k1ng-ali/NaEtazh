@@ -106,7 +106,7 @@ class CheckoutService:
         products = {pid: p for pid, p in found.items() if p.status == ProductStatusEnum.published.value}
         removed = [pid for pid in quantities if pid not in products]
         stock = await self.repo.get_stock_available(list(products))
-        offers = await self.pricing.get_best_offers(list(products))
+        offers = await self.pricing.get_sellable_offers(list(products.values()))
 
         building = complex_ = None
         if data.building_code:

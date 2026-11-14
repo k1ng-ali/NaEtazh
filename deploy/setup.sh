@@ -71,5 +71,5 @@ echo
 echo "Готово, сайт: $SITE"
 echo "Создайте владельца (пароль спросит в терминале):"
 echo "  cd $DIR && docker compose -f docker-compose.prod.yml exec backend python -m scripts.create_user --login owner --name \"Имя\" --role admin"
-echo "Демо-каталог для показа: sh demo.sh"
+echo "Каталог: владелец задаёт наценку и включает «Товары партнёра на витрине» в разделе «Партнёр»"
 echo "HTTPS, когда домен указывает на сервер: sh ssl.sh <почта>"
