@@ -10,6 +10,7 @@ const jsQR = require('jsqr');
 const PDFDocument = require('pdfkit');
 const SVGtoPDF = require('svg-to-pdfkit');
 const { Resvg } = require('@resvg/resvg-js');
+const { PNG } = require('pngjs');
 
 const ROOT = __dirname;
 const LOGO_DIR = path.join(ROOT, '..', 'logo', 'svg');
@@ -201,6 +202,25 @@ function truck(x, y, w, p, { flip = false } = {}) {
   return { svg: `<g transform="${tf}">${body}</g>`, h: TRUCK_H * k };
 }
 
+// Фото на белом фоне: вырезаем кадр и плавно уводим края в белый, чтобы не было рамки.
+// crop — [x, y, w, h] в пикселях исходника, fade — ширина растушёвки в долях кадра.
+function photo(file, x, y, w, crop, fade = 0.08) {
+  const src = PNG.sync.read(fs.readFileSync(path.join(ROOT, 'assets', file)));
+  const [cx, cy, cw, ch] = crop;
+  const out = new PNG({ width: cw, height: ch });
+  const fx = cw * fade, fy = ch * fade;
+  for (let j = 0; j < ch; j++) for (let i = 0; i < cw; i++) {
+    const si = ((cy + j) * src.width + cx + i) * 4, di = (j * cw + i) * 4;
+    const t = Math.min(1, i / fx, (cw - 1 - i) / fx, j / fy, (ch - 1 - j) / fy);
+    const e = t * t * (3 - 2 * t);
+    for (let c = 0; c < 3; c++) out.data[di + c] = Math.round(255 + (src.data[si + c] - 255) * e);
+    out.data[di + 3] = 255;
+  }
+  const h = (w * ch) / cw;
+  const uri = 'data:image/png;base64,' + PNG.sync.write(out).toString('base64');
+  return { svg: `<image x="${r3(x)}" y="${r3(y)}" width="${r3(w)}" height="${r3(h)}" href="${uri}"/>`, h, dpi: cw / (w / 25.4) };
+}
+
 // Телефон и имя после него на одной базовой линии; оба ужимаются, чтобы влезть в maxWidth
 function phoneWithName(phone, name, x, y, { size, fill, nameFill, maxWidth, anchor = 'start' }) {
   const gap = 0.35;
@@ -363,6 +383,34 @@ variants.push({
       T(SERVICES_PHONE, cx, 86.0, { font: 'brand', size: 4.0, anchor: 'middle', maxWidth: VR - VL });
   },
 });
+
+// 5. С фото Портера: лицевая как у варианта 1, на обратной — фото машины между списком и QR
+variants.push({
+  name: 'С фото Портера', orient: 'h',
+  note: 'Лицевая как у варианта 1. На обратной — фото грузовика на белом фоне.',
+  front() { return variants[0].front(); },
+  back() {
+    const qs = 20, qx = R - qs, cx = qx + qs / 2;
+    const q = qr(SERVICES_URL, qx, 15.6, qs);
+    const pw = 31, ph = photo('porter.png', 0, 0, pw, PORTER_CROP);
+    const px = qx - 3 - pw, py = 13.2;
+    const rows = SERVICES.map((s, i) => {
+      const y = ROW0 + i * ROW_STEP;
+      return rect(L, y - 1.95, 1.6, 1.6, OR, 0.35) + T(s, L + 3.4, y, { font: 'semibold', size: ROW_SIZE });
+    }).join('');
+    return rect(0, 0, H_.W, H_.H, WH) +
+      photo('porter.png', px, py, pw, PORTER_CROP).svg +
+      T('Услуги', L, 11.7, { font: 'brand', size: 5.6 }) +
+      logo('icon.svg', R - 7, TOP, { w: 7 }).svg +
+      rows +
+      T(SERVICES_CTA, L, 39.0, { size: 2.15, fill: MUTED, maxWidth: 50 }) +
+      phoneWithName(SERVICES_PHONE, SERVICES_NAME, L, 44.6, { size: 4.2, fill: GR, nameFill: MUTED, maxWidth: qx - L - 6 }) +
+      q.svg +
+      T(SERVICES_CAPTION, cx, 44.6, { font: 'medium', size: 2.0, anchor: 'middle', maxWidth: qs + 4 });
+  },
+});
+// Кадр фото Портера в assets/porter.png (1024×768): машина с тенью
+const PORTER_CROP = [100, 100, 860, 560];
 
 // ── PDF ──────────────────────────────────────────────────────────────────
 function cmyk(result, raw) {
