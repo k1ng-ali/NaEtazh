@@ -22,8 +22,9 @@ const SERVICES_CAPTION = 'stroybaza97.ru/services';
 const PHONE = '+7 (962) 925-87-87';
 const PHONE_LABEL = 'Заказы по телефону';
 const TAGLINE = ['Стройматериалы с доставкой', 'и подъёмом в квартиру'];
-const SERVICES = ['Доставка грузов', 'Вынос мусора', 'Демонтаж', 'Наливные стяжки'];
-const SERVICES_CTA = 'Заявка на сайте или по телефону';
+const SERVICES = ['Доставка грузов', 'Вынос мусора', 'Демонтаж', 'Сухие стяжки'];
+const SERVICES_CTA = 'Заявка на сайте или по телефону, Фазил';
+const SERVICES_PHONE = '+7 (903) 542-35-82';
 const SCAN_HINT = 'Наведите камеру телефона';
 
 // ── Формат ───────────────────────────────────────────────────────────────
@@ -196,8 +197,8 @@ variants.push({
       T('Услуги', L, 11.7, { font: 'brand', size: 5.6 }) +
       logo('icon.svg', R - 7, TOP, { w: 7 }).svg +
       rows +
-      T(SERVICES_CTA, L, 39.0, { size: 2.15, fill: MUTED }) +
-      T(PHONE, L, 44.6, { font: 'brand', size: 4.2, maxWidth: 52 }) +
+      T(SERVICES_CTA, L, 39.0, { size: 2.15, fill: MUTED, maxWidth: 54 }) +
+      T(SERVICES_PHONE, L, 44.6, { font: 'brand', size: 4.2, maxWidth: 52 }) +
       q.svg +
       T(SERVICES_CAPTION, R - 11, 44.6, { font: 'medium', size: 2.2, anchor: 'middle', maxWidth: 25 });
   },
@@ -232,8 +233,8 @@ variants.push({
     return rect(0, 0, H_.W, H_.H, GR) +
       T('Услуги', L, 11.7, { font: 'brand', size: 5.6, fill: OR }) +
       rows +
-      T(SERVICES_CTA, L, 39.0, { size: 2.15, fill: MUTED_DK }) +
-      T(PHONE, L, 44.6, { font: 'brand', size: 4.2, fill: WH, maxWidth: qx - L - 4 }) +
+      T(SERVICES_CTA, L, 39.0, { size: 2.15, fill: MUTED_DK, maxWidth: 54 }) +
+      T(SERVICES_PHONE, L, 44.6, { font: 'brand', size: 4.2, fill: WH, maxWidth: qx - L - 4 }) +
       q.svg +
       T(SERVICES_CAPTION, qx + outer / 2, 36.4, { font: 'medium', size: 2.2, fill: WH, anchor: 'middle', maxWidth: outer }) +
       T('заявка за минуту', qx + outer / 2, 40.0, { size: 2.05, fill: MUTED_DK, anchor: 'middle', maxWidth: outer });
@@ -272,7 +273,7 @@ variants.push({
       T('Услуги', L, 12.0, { font: 'brand', size: 6.0, fill: WH }) +
       rows +
       T(SERVICES_CTA, L, 39.4, { font: 'medium', size: 2.2, fill: WH, maxWidth: panelX - L - 4 }) +
-      T(PHONE, L, 44.6, { font: 'brand', size: 4.4, fill: WH, maxWidth: panelX - L - 4 });
+      T(SERVICES_PHONE, L, 44.6, { font: 'brand', size: 4.4, fill: WH, maxWidth: panelX - L - 4 });
   },
 });
 
@@ -309,7 +310,7 @@ variants.push({
       q.svg +
       T(SERVICES_CAPTION, cx, 76.0, { font: 'medium', size: 2.2, anchor: 'middle', maxWidth: VR - VL }) +
       T(SERVICES_CTA, cx, 80.4, { size: 2.05, fill: MUTED, anchor: 'middle', maxWidth: VR - VL }) +
-      T(PHONE, cx, 86.0, { font: 'brand', size: 4.0, anchor: 'middle', maxWidth: VR - VL });
+      T(SERVICES_PHONE, cx, 86.0, { font: 'brand', size: 4.0, anchor: 'middle', maxWidth: VR - VL });
   },
 });
 
