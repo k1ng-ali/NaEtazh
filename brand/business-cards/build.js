@@ -23,7 +23,8 @@ const PHONE = '+7 (962) 925-87-87';
 const PHONE_LABEL = 'Заказы по телефону';
 const TAGLINE = ['Стройматериалы с доставкой', 'и подъёмом в квартиру'];
 const SERVICES = ['Доставка грузов', 'Вынос мусора', 'Демонтаж', 'Сухие стяжки'];
-const SERVICES_CTA = 'Заявка на сайте или по телефону, Фазил';
+const SERVICES_CTA = 'Заявка на сайте или по телефону';
+const SERVICES_NAME = 'Фазил';
 const SERVICES_PHONE = '+7 (903) 542-35-82';
 const SCAN_HINT = 'Наведите камеру телефона';
 
@@ -168,6 +169,46 @@ function plateNum(i, x, yBase, size, { plate = OR, digit = WH } = {}) {
     T(String(i + 1), x + w / 2, cy + size * 0.27, { font: 'brand', size: size * 0.74, fill: digit, anchor: 'middle' });
 }
 
+// Грузовичок с бортовой платформой, вид сбоку, без марки. Рисуется в своих единицах
+// (100 × 40, ноль — у земли), x, y — левый верхний угол, w — ширина в мм.
+// p: body — борта, rib — щели бортов, cab — кабина, glass — стекло, seam — дверь,
+//    chassis — рама и бампер, tire, hub, lamp — фара, bg — цвет фона (вырез арок).
+const TRUCK_W = 99, TRUCK_H = 40;
+function truck(x, y, w, p, { flip = false } = {}) {
+  const k = w / TRUCK_W;
+  const R = (x, y, w, h, f, rx = 0) => rect(x, y, w, h, f, rx);
+  const wheel = (cx) => `<circle cx="${cx}" cy="-7" r="8.6" fill="${p.bg}"/>`;
+  const tire = (cx) => `<circle cx="${cx}" cy="-7" r="7" fill="${p.tire}"/><circle cx="${cx}" cy="-7" r="3.2" fill="${p.hub}"/><circle cx="${cx}" cy="-7" r="1.1" fill="${p.tire}"/>`;
+  const body =
+    R(0, -27, 63, 10, p.body, 0.8) +
+    [15.5, 31, 46.5].map((rx) => R(rx, -27, 0.9, 10, p.rib)).join('') +
+    R(0, -27, 63, 1.5, p.rib, 0.6) +
+    R(0, -17, 63, 3, p.chassis) +
+    R(6, -14, 86, 3.2, p.chassis) +
+    `<path d="M64 -10L64 -36Q64 -40 68 -40L86 -40Q89 -40 91 -37L96.5 -27Q97.6 -25 97.6 -22L97.6 -10Z" fill="${p.cab}"/>` +
+    `<path d="M67 -37L85.4 -37Q87 -37 88 -35.4L92.6 -27.5L67 -27.5Z" fill="${p.glass}"/>` +
+    R(78.5, -27.5, 0.5, 15, p.seam) + R(73.5, -24.2, 3.2, 0.9, p.seam, 0.4) +
+    R(94.6, -21.5, 3, 2.6, p.lamp, 0.5) +
+    R(97.2, -34, 1.8, 5.5, p.chassis, 0.5) +
+    R(86, -12.2, 13, 3.4, p.chassis, 0.8) +
+    wheel(20) + wheel(80) + tire(20) + tire(80);
+  const tf = flip
+    ? `translate(${r3(x + w)} ${r3(y + TRUCK_H * k)}) scale(${-k} ${k})`
+    : `translate(${r3(x)} ${r3(y + TRUCK_H * k)}) scale(${k})`;
+  return { svg: `<g transform="${tf}">${body}</g>`, h: TRUCK_H * k };
+}
+
+// Телефон и имя после него на одной базовой линии; оба ужимаются, чтобы влезть в maxWidth
+function phoneWithName(phone, name, x, y, { size, fill, nameFill, maxWidth }) {
+  const gap = 0.35;
+  let s = size;
+  const width = (s) => measure(phone, 'brand', s) + s * gap + measure(name, 'semibold', s * 0.62);
+  while (width(s) > maxWidth) s *= 0.98;
+  const pw = measure(phone, 'brand', s);
+  return T(phone, x, y, { font: 'brand', size: s, fill }) +
+    T(name, x + pw + s * gap, y, { font: 'semibold', size: s * 0.62, fill: nameFill || fill });
+}
+
 // ── Варианты ─────────────────────────────────────────────────────────────
 const variants = [];
 
@@ -188,19 +229,22 @@ variants.push({
       T(DOMAIN, R - 11, 44.6, { font: 'semibold', size: 2.75, anchor: 'middle', maxWidth: 24 });
   },
   back() {
-    const q = qr(SERVICES_URL, R - 22, 15.2, 22);
+    const qs = 20, m = qs / 29, qx = R - qs, cx = qx + qs / 2;
+    const q = qr(SERVICES_URL, qx, TOP + 1, qs);
+    const tw = 27, tr = truck(R - tw, BOT - tw * TRUCK_H / TRUCK_W, tw,
+      { body: OR, rib: WH, cab: GR, glass: LINE, seam: MUTED, chassis: INK, tire: INK, hub: LINE, lamp: OR, bg: WH }, { flip: true });
     const rows = SERVICES.map((s, i) => {
       const y = 18.8 + i * 4.9;
       return rect(L, y - 2.05, 1.7, 1.7, OR, 0.35) + T(s, L + 3.5, y, { font: 'semibold', size: 3.05 });
     }).join('');
     return rect(0, 0, H_.W, H_.H, WH) +
       T('Услуги', L, 11.7, { font: 'brand', size: 5.6 }) +
-      logo('icon.svg', R - 7, TOP, { w: 7 }).svg +
       rows +
-      T(SERVICES_CTA, L, 39.0, { size: 2.15, fill: MUTED, maxWidth: 54 }) +
-      T(SERVICES_PHONE, L, 44.6, { font: 'brand', size: 4.2, maxWidth: 52 }) +
+      T(SERVICES_CTA, L, 39.0, { size: 2.15, fill: MUTED, maxWidth: 50 }) +
+      phoneWithName(SERVICES_PHONE, SERVICES_NAME, L, 44.6, { size: 4.2, fill: GR, nameFill: MUTED, maxWidth: R - tw - L - 3 }) +
       q.svg +
-      T(SERVICES_CAPTION, R - 11, 44.6, { font: 'medium', size: 2.2, anchor: 'middle', maxWidth: 25 });
+      T(SERVICES_CAPTION, cx, TOP + 1 + qs + 3.6, { font: 'medium', size: 2.0, anchor: 'middle', maxWidth: qs + 4 }) +
+      tr.svg;
   },
 });
 
@@ -233,11 +277,12 @@ variants.push({
     return rect(0, 0, H_.W, H_.H, GR) +
       T('Услуги', L, 11.7, { font: 'brand', size: 5.6, fill: OR }) +
       rows +
-      T(SERVICES_CTA, L, 39.0, { size: 2.15, fill: MUTED_DK, maxWidth: 54 }) +
-      T(SERVICES_PHONE, L, 44.6, { font: 'brand', size: 4.2, fill: WH, maxWidth: qx - L - 4 }) +
+      T(SERVICES_CTA, L, 39.0, { size: 2.15, fill: MUTED_DK, maxWidth: 50 }) +
+      phoneWithName(SERVICES_PHONE, SERVICES_NAME, L, 44.6, { size: 4.2, fill: WH, nameFill: MUTED_DK, maxWidth: qx - L - 3 }) +
       q.svg +
-      T(SERVICES_CAPTION, qx + outer / 2, 36.4, { font: 'medium', size: 2.2, fill: WH, anchor: 'middle', maxWidth: outer }) +
-      T('заявка за минуту', qx + outer / 2, 40.0, { size: 2.05, fill: MUTED_DK, anchor: 'middle', maxWidth: outer });
+      T(SERVICES_CAPTION, qx + outer / 2, 34.6, { font: 'medium', size: 2.0, fill: WH, anchor: 'middle', maxWidth: outer }) +
+      truck(qx, BOT - outer * TRUCK_H / TRUCK_W, outer,
+        { body: OR, rib: GR, cab: WH, glass: GR, seam: MUTED_DK, chassis: INK, tire: INK, hub: MUTED_DK, lamp: OR, bg: GR }, { flip: true }).svg;
   },
 });
 
@@ -267,13 +312,14 @@ variants.push({
       return `<circle cx="${L + 0.9}" cy="${r3(y - 1.1)}" r="0.9" fill="${WH}"/>` +
         T(s, L + 3.4, y, { font: 'semibold', size: 3.1, fill: WH });
     }).join('');
+    const tw = outer - 2;
     return rect(0, 0, H_.W, H_.H, OR) + q.svg +
-      T(SERVICES_CAPTION, cx, 43.0, { font: 'semibold', size: 2.3, fill: WH, anchor: 'middle', maxWidth: outer }) +
-      T('доставка, мусор, демонтаж', cx, 46.4, { size: 2.2, fill: WH, anchor: 'middle', maxWidth: outer }) +
+      truck(cx - tw / 2, BOT - tw * TRUCK_H / TRUCK_W, tw,
+        { body: GR, rib: OR, cab: WH, glass: GR, seam: MUTED_DK, chassis: GR, tire: GR, hub: WH, lamp: OR, bg: OR }, { flip: true }).svg +
       T('Услуги', L, 12.0, { font: 'brand', size: 6.0, fill: WH }) +
       rows +
-      T(SERVICES_CTA, L, 39.4, { font: 'medium', size: 2.2, fill: WH, maxWidth: panelX - L - 4 }) +
-      T(SERVICES_PHONE, L, 44.6, { font: 'brand', size: 4.4, fill: WH, maxWidth: panelX - L - 4 });
+      T(SERVICES_CAPTION, L, 39.4, { font: 'semibold', size: 2.3, fill: WH, maxWidth: panelX - L - 4 }) +
+      phoneWithName(SERVICES_PHONE, SERVICES_NAME, L, 44.6, { size: 4.4, fill: WH, maxWidth: panelX - L - 3 });
   },
 });
 
@@ -309,7 +355,7 @@ variants.push({
       rows +
       q.svg +
       T(SERVICES_CAPTION, cx, 76.0, { font: 'medium', size: 2.2, anchor: 'middle', maxWidth: VR - VL }) +
-      T(SERVICES_CTA, cx, 80.4, { size: 2.05, fill: MUTED, anchor: 'middle', maxWidth: VR - VL }) +
+      T(`${SERVICES_CTA}, ${SERVICES_NAME}`, cx, 80.4, { size: 2.05, fill: MUTED, anchor: 'middle', maxWidth: VR - VL }) +
       T(SERVICES_PHONE, cx, 86.0, { font: 'brand', size: 4.0, anchor: 'middle', maxWidth: VR - VL });
   },
 });
