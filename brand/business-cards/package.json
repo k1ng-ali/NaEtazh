@@ -1,0 +1,19 @@
+{
+  "name": "stroybaza-business-cards",
+  "private": true,
+  "description": "Сборка визиток «Строй База»: SVG, PDF для типографии, предпросмотр и проверка QR",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "@fontsource/golos-text": "5.1.0",
+    "@fontsource/rubik": "5.1.0",
+    "@resvg/resvg-js": "2.6.2",
+    "jsqr": "1.4.0",
+    "opentype.js": "1.3.4",
+    "pdfkit": "0.15.0",
+    "pngjs": "7.0.0",
+    "qrcode": "1.5.4",
+    "svg-to-pdfkit": "0.1.8"
+  }
+}
