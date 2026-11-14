@@ -20,6 +20,7 @@ const SERVICES_URL = 'https://stroybaza97.ru/services';
 const DOMAIN = 'stroybaza97.ru';
 const SERVICES_CAPTION = 'stroybaza97.ru/services';
 const PHONE = '+7 (962) 925-87-87';
+const PHONE_NAME = 'Содик';
 const PHONE_LABEL = 'Заказы по телефону';
 const TAGLINE = ['Стройматериалы с доставкой', 'и подъёмом в квартиру'];
 const SERVICES = ['Доставка грузов', 'Переезды', 'Вынос мусора', 'Демонтаж', 'Сухие стяжки'];
@@ -201,12 +202,13 @@ function truck(x, y, w, p, { flip = false } = {}) {
 }
 
 // Телефон и имя после него на одной базовой линии; оба ужимаются, чтобы влезть в maxWidth
-function phoneWithName(phone, name, x, y, { size, fill, nameFill, maxWidth }) {
+function phoneWithName(phone, name, x, y, { size, fill, nameFill, maxWidth, anchor = 'start' }) {
   const gap = 0.35;
   let s = size;
   const width = (s) => measure(phone, 'brand', s) + s * gap + measure(name, 'semibold', s * 0.62);
   while (width(s) > maxWidth) s *= 0.98;
   const pw = measure(phone, 'brand', s);
+  if (anchor === 'middle') x -= width(s) / 2;
   return T(phone, x, y, { font: 'brand', size: s, fill }) +
     T(name, x + pw + s * gap, y, { font: 'semibold', size: s * 0.62, fill: nameFill || fill });
 }
@@ -226,7 +228,7 @@ variants.push({
       T(TAGLINE[1], L, 22.2, { font: 'medium', size: 2.55 }) +
       rect(L, 25.4, 8, 0.7, OR) +
       T(PHONE_LABEL, L, 38.9, { size: 2.15, fill: MUTED }) +
-      T(PHONE, L, 44.6, { font: 'brand', size: 4.7, fill: GR, maxWidth: 52 }) +
+      phoneWithName(PHONE, PHONE_NAME, L, 44.6, { size: 4.7, fill: GR, nameFill: MUTED, maxWidth: R - 22 - L - 6.5 }) +
       q.svg +
       T(DOMAIN, R - 11, 44.6, { font: 'semibold', size: 2.75, anchor: 'middle', maxWidth: 24 });
   },
@@ -265,7 +267,7 @@ variants.push({
       T(TAGLINE[0], x2, 19.4, { font: 'medium', size: 2.55, fill: WH }) +
       T(TAGLINE[1], x2, 23.0, { font: 'medium', size: 2.55, fill: WH }) +
       T(PHONE_LABEL, x2, 38.9, { size: 2.15, fill: MUTED_DK }) +
-      T(PHONE, x2, 44.6, { font: 'brand', size: 4.6, fill: OR, maxWidth: R - x2 });
+      phoneWithName(PHONE, PHONE_NAME, x2, 44.6, { size: 4.6, fill: OR, nameFill: MUTED_DK, maxWidth: R - x2 });
   },
   back() {
     const qs = 20, m = qs / 29;
@@ -303,7 +305,7 @@ variants.push({
       T(TAGLINE[0], L, 26.4, { font: 'medium', size: 2.5 }) +
       T(TAGLINE[1], L, 29.9, { font: 'medium', size: 2.5 }) +
       T(DOMAIN, L, 37.2, { font: 'semibold', size: 3.0, fill: OR }) +
-      T(PHONE, L, 44.6, { font: 'brand', size: 4.5, maxWidth: panelX - L - 4 });
+      phoneWithName(PHONE, PHONE_NAME, L, 44.6, { size: 4.5, fill: GR, nameFill: MUTED, maxWidth: panelX - L - 3 });
   },
   back() {
     const panelX = 55, qs = 24, m = qs / 29, outer = qs + 8 * m;
@@ -339,7 +341,7 @@ variants.push({
       q.svg +
       T(DOMAIN, cx, 68.0, { font: 'semibold', size: 2.9, anchor: 'middle' }) +
       rect(cx - 3, 72.4, 6, 0.6, OR) +
-      T(PHONE_LABEL, cx, 79.2, { size: 2.1, fill: MUTED, anchor: 'middle' }) +
+      T(`${PHONE_LABEL}, ${PHONE_NAME}`, cx, 79.2, { size: 2.1, fill: MUTED, anchor: 'middle' }) +
       T(PHONE, cx, 85.2, { font: 'brand', size: 4.3, anchor: 'middle', maxWidth: VR - VL });
   },
   back() {
