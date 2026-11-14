@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PhoneInput from '~/shared/ui/PhoneInput.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { GOAL, reachGoal } from '~/features/analytics/metrika'
 import CartSummary from '~/features/cart/components/CartSummary.vue'
@@ -82,7 +83,7 @@ async function submit() {
       errorText.value = ERRORS[data.detail] ?? 'Не удалось оформить заказ. Попробуйте ещё раз'
       await cart.refreshQuote()
     } else if (Array.isArray(data?.detail)) {
-      errorText.value = 'Проверьте номер телефона: нужен мобильный, например +7 912 345-67-89'
+      errorText.value = 'Проверьте номер телефона: нужен мобильный, например +7 (912) 345-67-89'
     } else {
       errorText.value = 'Нет связи с сервером. Корзина сохранена, попробуйте ещё раз'
     }
@@ -107,16 +108,7 @@ async function submit() {
           </label>
           <label class="field">
             <span class="field__label">Телефон</span>
-            <input
-              v-model="form.phone"
-              class="input"
-              type="tel"
-              autocomplete="tel"
-              inputmode="tel"
-              placeholder="+7 912 345-67-89"
-              required
-              maxlength="20"
-            >
+            <PhoneInput v-model="form.phone" class="input" placeholder="+7 (912) 345-67-89" required />
           </label>
           <div class="field">
             <span class="field__label">Как удобнее связаться</span>

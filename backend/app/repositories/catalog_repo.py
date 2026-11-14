@@ -88,6 +88,26 @@ class CatalogRepository(BaseRepository):
         )
         return set(result.scalars().all())
 
+    async def get_category_photos(self) -> dict[int, tuple[str, float]]:
+        """
+        Фото самого ходового товара с фото в каждом разделе, где есть что купить.
+
+        Ходовой — с наибольшим остатком у поставщика: этот товар точно есть и он популярный.
+        Возвращает раздел → (фото, остаток), остаток нужен, чтобы выбрать лучшее из подразделов.
+        """
+        stock = (
+            select(func.coalesce(func.max(SupplierOffer.quantity), 0))
+            .where(SupplierOffer.product_id == Product.id, SupplierOffer.is_active == True)  # noqa: E712
+            .scalar_subquery()
+        )
+        result = await self.db.execute(
+            select(Product.category_id, Product.images[0].astext, stock)
+            .where(*visible_product_conditions(), func.jsonb_array_length(Product.images) > 0)
+            .distinct(Product.category_id)
+            .order_by(Product.category_id, stock.desc(), Product.id)
+        )
+        return {category_id: (image, float(score)) for category_id, image, score in result.all()}
+
     async def get_published_products(
         self,
         category_slug: str | None = None,

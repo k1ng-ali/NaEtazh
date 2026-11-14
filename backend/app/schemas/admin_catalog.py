@@ -32,6 +32,7 @@ class CategoryOutAdmin(BaseModel):
     slug: str
     position: int
     is_active: bool
+    image: str | None = None
     product_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)

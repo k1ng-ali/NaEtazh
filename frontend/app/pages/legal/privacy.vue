@@ -15,7 +15,7 @@ useHead({ title: `Политика обработки персональных �
 
     <h2>1. Кто обрабатывает данные</h2>
     <p>
-      Оператор — {{ SELLER.legalName }}, ОГРН {{ SELLER.ogrn }}, ИНН {{ SELLER.inn }},
+      Оператор — {{ SELLER.legalName }}, ОГРНИП {{ SELLER.ogrn }}, ИНН {{ SELLER.inn }},
       адрес: {{ SELLER.address }}. Вопросы о данных принимаем по почте {{ SELLER.email }}
       и по телефону {{ SELLER.phone }}.
     </p>

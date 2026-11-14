@@ -4,6 +4,8 @@ export interface Category {
   name: string
   slug: string
   position: number
+  // Своя картинка раздела или фото ходового товара из него
+  image: string | null
 }
 
 export interface Product {

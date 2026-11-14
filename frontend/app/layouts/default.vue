@@ -2,13 +2,16 @@
 import CatalogSearch from '~/features/catalog/components/CatalogSearch.vue'
 import { useCartStore } from '~/features/cart/store'
 import CookieBanner from '~/features/cookies/components/CookieBanner.vue'
+import { useShopPhone } from '~/features/legal/useShopPhone'
 import { useLocationStore } from '~/features/location/store'
+import { telHref } from '~/features/services/api'
 import { LEGAL_LINKS, SELLER } from '~/shared/lib/legal'
 import BrandLogo from '~/shared/ui/BrandLogo.vue'
 
 const cart = useCartStore()
 const location = useLocationStore()
 const route = useRoute()
+const ordersPhone = await useShopPhone()
 </script>
 
 <template>
@@ -49,13 +52,17 @@ const route = useRoute()
           <span>{{ SELLER.shopName }}</span>
           <span>Оплата при получении наличными</span>
         </div>
+        <div class="footer__row footer__contacts">
+          <a :href="telHref(ordersPhone)" class="footer__contact">Заказы: {{ ordersPhone }}</a>
+          <a :href="`mailto:${SELLER.email}`" class="footer__contact">{{ SELLER.email }}</a>
+        </div>
         <nav class="footer__links" aria-label="Документы">
           <NuxtLink v-for="link in LEGAL_LINKS" :key="link.to" :to="link.to" class="footer__link">
             {{ link.label }}
           </NuxtLink>
         </nav>
         <p class="footer__seller">
-          {{ SELLER.legalName }}, ОГРН {{ SELLER.ogrn }}, ИНН {{ SELLER.inn }}
+          {{ SELLER.legalName }}, ОГРНИП {{ SELLER.ogrn }}, ИНН {{ SELLER.inn }}
         </p>
       </div>
     </footer>
@@ -156,6 +163,18 @@ const route = useRoute()
     display: flex;
     flex-direction: column;
     gap: 8px;
+  }
+
+  &__contact {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-size);
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  &__contacts {
+    justify-content: flex-start;
   }
 
   &__row,

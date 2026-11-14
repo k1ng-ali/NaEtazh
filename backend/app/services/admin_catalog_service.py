@@ -77,6 +77,32 @@ class AdminCatalogService:
         count = await self.repo.count_category_products(category_id=category_id)
         return CategoryOutAdmin.model_validate(category).model_copy(update={"product_count": count})
 
+    async def set_category_image(self, category_id: int, content: bytes | None) -> CategoryOutAdmin:
+        """Своя картинка плитки раздела. None — убрать, тогда покажем фото товара."""
+        category = await self._get_category_or_404(category_id)
+        url = None
+        if content is not None:
+            try:
+                compressed = await run_in_threadpool(compress_image, content)
+            except InvalidImageError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+                ) from exc
+            url = await run_in_threadpool(save_media, compressed, "categories")
+
+        old, category.image = category.image, url
+        try:
+            await self.db.commit()
+        except Exception:
+            if url:
+                delete_media(url)
+            raise
+        if old:
+            delete_media(old)
+        await self.db.refresh(category)
+        count = await self.repo.count_category_products(category_id=category_id)
+        return CategoryOutAdmin.model_validate(category).model_copy(update={"product_count": count})
+
     async def delete_category(self, category_id: int) -> None:
         category = await self._get_category_or_404(category_id)
         if await self.repo.count_category_products(category_id=category_id):

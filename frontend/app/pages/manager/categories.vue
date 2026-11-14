@@ -5,6 +5,7 @@ import { useAdminCatalogStore } from '~/features/staff/catalog/store'
 import type { AdminCategory } from '~/features/staff/catalog/types'
 import { errorMessage } from '~/features/staff/shared/errors'
 import { useToast } from '~/features/staff/shared/toast'
+import { useMediaUrl } from '~/shared/lib/media'
 
 definePageMeta({ layout: 'staff', middleware: 'staff', roles: ['admin', 'manager'] })
 useHead({ title: 'Категории | Кабинет' })
@@ -12,13 +13,16 @@ useHead({ title: 'Категории | Кабинет' })
 const api = useAdminCatalogApi()
 const catalog = useAdminCatalogStore()
 const toast = useToast()
+const mediaUrl = useMediaUrl()
 
 const emptyForm = () => ({ name: '', slug: '', parent_id: '' as number | '', position: '0', is_active: true })
 const form = reactive(emptyForm())
 // null: добавляем новую категорию
 const editingId = ref<number | null>(null)
 const isSaving = ref(false)
+const isImageBusy = ref(false)
 const loadError = ref('')
+const editing = computed(() => (editingId.value ? byId.value.get(editingId.value) ?? null : null))
 
 const byId = computed(() => new Map(catalog.categories.map((item) => [item.id, item])))
 const rows = computed(() =>
@@ -69,6 +73,37 @@ async function submit() {
   }
 }
 
+async function uploadImage(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file || !editingId.value) return
+  isImageBusy.value = true
+  try {
+    await api.uploadCategoryImage(editingId.value, file)
+    await catalog.loadCategories()
+    toast.success('Картинка сохранена')
+  } catch (error) {
+    toast.error(errorMessage(error))
+  } finally {
+    isImageBusy.value = false
+  }
+}
+
+async function removeImage() {
+  if (!editingId.value) return
+  isImageBusy.value = true
+  try {
+    await api.deleteCategoryImage(editingId.value)
+    await catalog.loadCategories()
+    toast.success('Картинка убрана, на главной будет фото товара')
+  } catch (error) {
+    toast.error(errorMessage(error))
+  } finally {
+    isImageBusy.value = false
+  }
+}
+
 async function remove(category: AdminCategory) {
   if (!confirm(`Удалить категорию «${category.name}»?`)) return
   try {
@@ -103,7 +138,10 @@ onMounted(async () => {
         <ul v-else class="list">
           <li v-for="row in rows" :key="row.id" class="list__item" :class="{ 'is-editing': row.id === editingId }">
             <div class="list__body" :style="{ paddingLeft: `${row.depth * 20}px` }">
-              <span class="list__name">{{ row.name }}</span>
+              <span class="list__name">
+                <img v-if="row.image" class="list__thumb" :src="mediaUrl(row.image)" alt="">
+                {{ row.name }}
+              </span>
               <span class="a-muted">
                 {{ row.product_count }} тов. · /{{ row.slug }}
                 <span v-if="!row.is_active" class="a-badge">Скрыта</span>
@@ -152,6 +190,31 @@ onMounted(async () => {
           <input v-model="form.is_active" type="checkbox">
           Показывать на витрине
         </label>
+        <div v-if="editing && editing.parent_id === null" class="image">
+          <span class="a-field__label">Картинка на главной</span>
+          <img v-if="editing.image" class="image__preview" :src="mediaUrl(editing.image)" alt="">
+          <p class="a-muted">
+            {{ editing.image
+              ? 'Своя картинка вместо фото товара.'
+              : 'Сейчас на главной фото самого ходового товара раздела. Можно загрузить свою иллюстрацию.' }}
+            JPEG, PNG или WebP до 10 МБ, лучше на белом или прозрачном фоне.
+          </p>
+          <div class="layout__buttons">
+            <label class="a-btn a-btn--ghost a-btn--small" :class="{ 'is-disabled': isImageBusy }">
+              {{ editing.image ? 'Заменить' : 'Загрузить' }}
+              <input class="image__input" type="file" accept="image/jpeg,image/png,image/webp" :disabled="isImageBusy" @change="uploadImage">
+            </label>
+            <button
+              v-if="editing.image"
+              class="a-btn a-btn--ghost a-btn--small"
+              type="button"
+              :disabled="isImageBusy"
+              @click="removeImage"
+            >
+              Убрать
+            </button>
+          </div>
+        </div>
         <div class="layout__buttons">
           <button class="a-btn" type="submit" :disabled="isSaving">
             {{ editingId ? 'Сохранить' : 'Добавить' }}
@@ -209,12 +272,50 @@ onMounted(async () => {
   }
 
   &__name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-weight: 600;
+  }
+
+  &__thumb {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: var(--color-surface);
   }
 
   &__actions {
     display: flex;
     gap: 6px;
+  }
+}
+
+.image {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &__preview {
+    width: 120px;
+    height: 90px;
+    object-fit: contain;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+  }
+
+  &__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  .is-disabled {
+    opacity: 0.5;
+    pointer-events: none;
   }
 }
 

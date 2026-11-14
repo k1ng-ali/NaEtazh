@@ -18,6 +18,18 @@ class CatalogService:
         categories = await self.repo.get_active_categories()
         by_id = {category.id: category for category in categories}
         visible: set[int] = set()
+        photos = await self.repo.get_category_photos()
+        # Лучшее фото раздела — среди него самого и всех подразделов
+        best: dict[int, tuple[str, float]] = {}
+        for category_id, photo in photos.items():
+            current = by_id.get(category_id)
+            seen: set[int] = set()
+            while current is not None and current.id not in seen:
+                seen.add(current.id)
+                if current.id not in best or photo[1] > best[current.id][1]:
+                    best[current.id] = photo
+                current = by_id.get(current.parent_id) if current.parent_id is not None else None
+
         for category_id in await self.repo.get_visible_category_ids():
             # Подраздел выключенного раздела не показываем
             chain, current = [], by_id.get(category_id)
@@ -27,7 +39,13 @@ class CatalogService:
                     visible.update(chain)
                     break
                 current = by_id.get(current.parent_id)
-        return [CategoryOut.model_validate(item) for item in categories if item.id in visible]
+        return [
+            CategoryOut.model_validate(item).model_copy(
+                update={"image": item.image or (best[item.id][0] if item.id in best else None)}
+            )
+            for item in categories
+            if item.id in visible
+        ]
 
     async def list_products(
         self,

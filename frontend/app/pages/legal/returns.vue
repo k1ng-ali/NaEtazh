@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import LegalDocument from '~/features/legal/components/LegalDocument.vue'
+import { useShopPhone } from '~/features/legal/useShopPhone'
 import { SELLER } from '~/shared/lib/legal'
+
+const phone = await useShopPhone()
 
 useHead({ title: `Доставка, оплата и возврат | ${SELLER.shopName}` })
 </script>
@@ -8,8 +11,8 @@ useHead({ title: `Доставка, оплата и возврат | ${SELLER.sh
 <template>
   <LegalDocument title="Доставка, оплата и возврат">
     <p>
-      Продавец — {{ SELLER.legalName }}, ОГРН {{ SELLER.ogrn }}, ИНН {{ SELLER.inn }},
-      адрес: {{ SELLER.address }}. Телефон {{ SELLER.phone }}, почта {{ SELLER.email }}.
+      Продавец — {{ SELLER.legalName }}, ОГРНИП {{ SELLER.ogrn }}, ИНН {{ SELLER.inn }},
+      адрес: {{ SELLER.address }}. Телефон {{ phone }}, почта {{ SELLER.email }}.
     </p>
 
     <h2>Как оформить заказ</h2>
@@ -74,7 +77,7 @@ useHead({ title: `Доставка, оплата и возврат | ${SELLER.sh
 
     <h2>Как оформить возврат</h2>
     <p>
-      Позвоните {{ SELLER.phone }} или напишите на {{ SELLER.email }}: номер заказа, что
+      Позвоните {{ phone }} или напишите на {{ SELLER.email }}: номер заказа, что
       возвращаете и почему. Менеджер договорится о времени, когда курьер заберёт товар.
     </p>
   </LegalDocument>

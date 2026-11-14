@@ -20,6 +20,13 @@ export const useAdminCatalogApi = () => {
     updateCategory: (id: number, payload: CategoryPayload) =>
       http<AdminCategory>(`/manager/categories/${id}`, { method: 'PATCH', body: payload }),
     deleteCategory: (id: number) => http<void>(`/manager/categories/${id}`, { method: 'DELETE' }),
+    uploadCategoryImage: (id: number, file: File) => {
+      const body = new FormData()
+      body.append('file', file)
+      return http<AdminCategory>(`/manager/categories/${id}/image`, { method: 'POST', body })
+    },
+    deleteCategoryImage: (id: number) =>
+      http<AdminCategory>(`/manager/categories/${id}/image`, { method: 'DELETE' }),
 
     listProducts: (filters: ProductFilters = {}) => http<ProductRowList>('/manager/products/', { query: filters }),
     getProduct: (id: number) => http<AdminProduct>(`/manager/products/${id}`),

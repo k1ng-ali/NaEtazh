@@ -11,6 +11,8 @@ class CategoryOut(BaseModel):
     name: str
     slug: str
     position: int
+    # Своя картинка раздела или фото ходового товара из него и подразделов
+    image: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

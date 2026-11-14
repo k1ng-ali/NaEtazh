@@ -146,15 +146,46 @@ async def test_sellable_offers_need_storefront_supplier_and_markup():
 async def test_list_categories_shows_parents_of_visible_and_hides_under_inactive():
     service = CatalogService(db=AsyncMock())
     categories = [
-        SimpleNamespace(id=1, parent_id=None, name="Смеси", slug="smesi", position=1),
-        SimpleNamespace(id=2, parent_id=1, name="Шпаклевка", slug="shpaklevka", position=2),
-        SimpleNamespace(id=3, parent_id=None, name="Пустой", slug="empty", position=3),
+        SimpleNamespace(id=1, parent_id=None, name="Смеси", slug="smesi", position=1, image=None),
+        SimpleNamespace(id=2, parent_id=1, name="Шпаклевка", slug="shpaklevka", position=2, image=None),
+        SimpleNamespace(id=3, parent_id=None, name="Пустой", slug="empty", position=3, image=None),
         # Родитель 4 выключен и в список активных не попал
-        SimpleNamespace(id=5, parent_id=4, name="Под выключенным", slug="hidden", position=5),
+        SimpleNamespace(id=5, parent_id=4, name="Под выключенным", slug="hidden", position=5, image=None),
     ]
     service.repo.get_active_categories = AsyncMock(return_value=categories)
     service.repo.get_visible_category_ids = AsyncMock(return_value={2, 5})
+    service.repo.get_category_photos = AsyncMock(return_value={})
 
     result = await service.list_categories()
 
     assert [item.slug for item in result] == ["smesi", "shpaklevka"]
+
+
+async def test_list_categories_picks_best_photo_from_subtree_unless_own_image():
+    service = CatalogService(db=AsyncMock())
+    categories = [
+        SimpleNamespace(id=1, parent_id=None, name="Смеси", slug="smesi", position=1, image=None),
+        SimpleNamespace(id=2, parent_id=1, name="Шпаклевка", slug="shpaklevka", position=2, image=None),
+        SimpleNamespace(id=3, parent_id=1, name="Штукатурки", slug="shtukaturki", position=3, image=None),
+        SimpleNamespace(
+            id=4, parent_id=None, name="Краски", slug="kraski", position=4, image="/media/own.webp"
+        ),
+    ]
+    service.repo.get_active_categories = AsyncMock(return_value=categories)
+    service.repo.get_visible_category_ids = AsyncMock(return_value={2, 3, 4})
+    service.repo.get_category_photos = AsyncMock(
+        return_value={
+            2: ("/media/shpak.webp", 40.0),
+            3: ("/media/rotband.webp", 900.0),
+            4: ("/media/x.webp", 5.0),
+        }
+    )
+
+    images = {item.slug: item.image for item in await service.list_categories()}
+
+    assert images == {
+        "smesi": "/media/rotband.webp",
+        "shpaklevka": "/media/shpak.webp",
+        "shtukaturki": "/media/rotband.webp",
+        "kraski": "/media/own.webp",
+    }

@@ -7,6 +7,8 @@ export interface AdminCategory {
   slug: string
   position: number
   is_active: boolean
+  // Своя картинка плитки на главной, пусто — фото товара раздела
+  image: string | null
   product_count: number
 }
 

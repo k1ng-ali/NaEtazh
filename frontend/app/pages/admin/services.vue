@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PhoneInput from '~/shared/ui/PhoneInput.vue'
 import { onMounted, ref } from 'vue'
 import { useStaffServicesApi } from '~/features/staff/services/api'
 import type { ShopServiceAdmin, ShopServicePayload } from '~/features/staff/services/types'
@@ -49,7 +50,7 @@ async function load() {
 // Номер с ошибкой сервер отклоняет с 422, объясняем по-человечески
 const saveError = (error: unknown) =>
   (error as { statusCode?: number })?.statusCode === 422
-    ? 'Проверьте телефон: 10–12 цифр, например +7 (3452) 50-50-50'
+    ? 'Проверьте телефон: нужно 11 цифр, например +7 (345) 250-50-50 или 8 (800) 555-35-35'
     : errorMessage(error)
 
 async function savePhone() {
@@ -119,14 +120,7 @@ onMounted(load)
       <div class="row">
         <label class="a-field phone">
           <span>Общий телефон</span>
-          <input
-            v-model="generalPhone"
-            class="a-input"
-            type="tel"
-            inputmode="tel"
-            maxlength="30"
-            placeholder="+7 (3452) 50-50-50"
-          >
+          <PhoneInput v-model="generalPhone" class="a-input" keep-eight placeholder="+7 (345) 250-50-50" />
         </label>
         <button class="a-btn" type="submit" :disabled="isSavingPhone">
           {{ isSavingPhone ? 'Сохраняем…' : 'Сохранить' }}
@@ -157,14 +151,7 @@ onMounted(load)
       </div>
       <label class="a-field">
         <span>Свой телефон услуги</span>
-        <input
-          v-model="draft.phone"
-          class="a-input"
-          type="tel"
-          inputmode="tel"
-          maxlength="30"
-          :placeholder="generalPhone ? `Общий: ${generalPhone}` : 'Общий телефон магазина'"
-        >
+        <PhoneInput v-model="draft.phone" class="a-input" keep-eight :placeholder="generalPhone ? `Общий: ${generalPhone}` : 'Общий телефон магазина'" />
       </label>
       <label class="a-field">
         <span>Коротко для карточки</span>

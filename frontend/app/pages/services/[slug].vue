@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PhoneInput from '~/shared/ui/PhoneInput.vue'
 import { computed, reactive, ref } from 'vue'
 import { useLocationStore } from '~/features/location/store'
 import { PRICE_ON_CALL, telHref, useServicesApi } from '~/features/services/api'
@@ -69,7 +70,7 @@ async function submit() {
     } else if (typeof data.data?.detail === 'string') {
       errorText.value = ERRORS[data.data.detail] ?? 'Не удалось отправить заявку. Попробуйте ещё раз'
     } else if (Array.isArray(data.data?.detail)) {
-      errorText.value = 'Проверьте номер телефона: нужен мобильный, например +7 912 345-67-89'
+      errorText.value = 'Проверьте номер телефона: нужен мобильный, например +7 (912) 345-67-89'
     } else {
       errorText.value = 'Нет связи с сервером. Попробуйте ещё раз'
     }
@@ -106,16 +107,7 @@ async function submit() {
       </label>
       <label class="field">
         <span class="field__label">Телефон</span>
-        <input
-          v-model="form.phone"
-          class="input"
-          type="tel"
-          autocomplete="tel"
-          inputmode="tel"
-          placeholder="+7 912 345-67-89"
-          required
-          maxlength="20"
-        >
+        <PhoneInput v-model="form.phone" class="input" placeholder="+7 (912) 345-67-89" required />
       </label>
 
       <ClientOnly>

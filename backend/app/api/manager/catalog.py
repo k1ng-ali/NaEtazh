@@ -44,6 +44,27 @@ async def update_category(
     return await service.update_category(category_id=category_id, data=data)
 
 
+@router.post("/categories/{category_id}/image", response_model=CategoryOutAdmin)
+async def upload_category_image(
+    category_id: int,
+    file: UploadFile = File(...),
+    service: AdminCatalogService = Depends(get_admin_catalog_service),
+):
+    content = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE, detail="Image is larger than 10 MB"
+        )
+    return await service.set_category_image(category_id=category_id, content=content)
+
+
+@router.delete("/categories/{category_id}/image", response_model=CategoryOutAdmin)
+async def delete_category_image(
+    category_id: int, service: AdminCatalogService = Depends(get_admin_catalog_service)
+):
+    return await service.set_category_image(category_id=category_id, content=None)
+
+
 @router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_category(
     category_id: int, service: AdminCatalogService = Depends(get_admin_catalog_service)

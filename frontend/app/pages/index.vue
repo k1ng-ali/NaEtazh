@@ -3,8 +3,10 @@ import { computed } from 'vue'
 import CatalogSearch from '~/features/catalog/components/CatalogSearch.vue'
 import { useCatalogApi } from '~/features/catalog/api'
 import { useServicesApi } from '~/features/services/api'
+import { useMediaUrl } from '~/shared/lib/media'
 
 const api = useCatalogApi()
+const mediaUrl = useMediaUrl()
 const { data: allCategories, error } = await useAsyncData('home-categories', () => api.listCategories())
 // На главной только разделы, подразделы — на странице раздела
 const categories = computed(() => allCategories.value?.filter((category) => category.parent_id === null) ?? [])
@@ -29,10 +31,18 @@ const { data: services } = await useAsyncData('home-services', () => servicesApi
         <NuxtLink
           v-for="category in categories"
           :key="category.id"
-          class="home__tile"
+          class="home__tile home__tile--category"
           :to="{ path: '/catalog', query: { category: category.slug } }"
         >
-          {{ category.name }}
+          <span class="home__name">{{ category.name }}</span>
+          <img
+            v-if="category.image"
+            class="home__image"
+            :src="mediaUrl(category.image)"
+            alt=""
+            loading="lazy"
+            decoding="async"
+          >
         </NuxtLink>
       </nav>
     </section>
@@ -96,6 +106,24 @@ const { data: services } = await useAsyncData('home-services', () => servicesApi
     white-space: nowrap;
   }
 
+  &__name {
+    position: relative;
+    z-index: 1;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  &__image {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    width: 52%;
+    height: 58%;
+    object-fit: contain;
+    object-position: right bottom;
+    pointer-events: none;
+  }
+
   &__summary {
     font-size: 13px;
     font-weight: 400;
@@ -103,6 +131,8 @@ const { data: services } = await useAsyncData('home-services', () => servicesApi
   }
 
   &__tile {
+    position: relative;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -112,6 +142,12 @@ const { data: services } = await useAsyncData('home-services', () => servicesApi
     background: var(--color-surface);
     border-radius: var(--radius-card);
     font-weight: 600;
+
+    // У разделов название сверху, картинка в правом нижнем углу
+    &--category {
+      justify-content: flex-start;
+      min-height: 132px;
+    }
 
     // Услуги тёмные, чтобы не путать с разделами каталога
     &--service {
@@ -144,6 +180,10 @@ const { data: services } = await useAsyncData('home-services', () => servicesApi
 
     &:hover {
       outline: 1.5px solid var(--color-text);
+    }
+
+    &--category {
+      min-height: 180px;
     }
   }
 }

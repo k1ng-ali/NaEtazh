@@ -32,6 +32,8 @@ class Category(Base):
     slug = Column(String, nullable=False, unique=True)
     position = Column(Integer, nullable=False, default=0, server_default="0")
     is_active = Column(Boolean, nullable=False, default=True, server_default="true")
+    # Своя картинка плитки на главной. Пусто — фото ходового товара раздела
+    image = Column(String, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
 
 
