@@ -22,7 +22,9 @@ const SERVICES_CAPTION = 'stroybaza97.ru/services';
 const PHONE = '+7 (962) 925-87-87';
 const PHONE_LABEL = 'Заказы по телефону';
 const TAGLINE = ['Стройматериалы с доставкой', 'и подъёмом в квартиру'];
-const SERVICES = ['Доставка грузов', 'Вынос мусора', 'Демонтаж', 'Сухие стяжки'];
+const SERVICES = ['Доставка грузов', 'Переезды', 'Вынос мусора', 'Демонтаж', 'Сухие стяжки'];
+// Список услуг на горизонтальной визитке: первая строка и шаг (мм)
+const ROW0 = 17.5, ROW_STEP = 4.25, ROW_SIZE = 2.85;
 const SERVICES_CTA = 'Заявка на сайте или по телефону';
 const SERVICES_NAME = 'Фазил';
 const SERVICES_PHONE = '+7 (903) 542-35-82';
@@ -234,8 +236,8 @@ variants.push({
     const tw = 27, tr = truck(R - tw, BOT - tw * TRUCK_H / TRUCK_W, tw,
       { body: OR, rib: WH, cab: GR, glass: LINE, seam: MUTED, chassis: INK, tire: INK, hub: LINE, lamp: OR, bg: WH }, { flip: true });
     const rows = SERVICES.map((s, i) => {
-      const y = 18.8 + i * 4.9;
-      return rect(L, y - 2.05, 1.7, 1.7, OR, 0.35) + T(s, L + 3.5, y, { font: 'semibold', size: 3.05 });
+      const y = ROW0 + i * ROW_STEP;
+      return rect(L, y - 1.95, 1.6, 1.6, OR, 0.35) + T(s, L + 3.4, y, { font: 'semibold', size: ROW_SIZE });
     }).join('');
     return rect(0, 0, H_.W, H_.H, WH) +
       T('Услуги', L, 11.7, { font: 'brand', size: 5.6 }) +
@@ -271,8 +273,8 @@ variants.push({
     const qx = R - outer;
     const q = qr(SERVICES_URL, qx + 4 * m, TOP + 4 * m, qs, { tile: true });
     const rows = SERVICES.map((s, i) => {
-      const y = 18.8 + i * 4.9;
-      return plateNum(i, L, y, 3.0) + T(s, L + 5.6, y, { font: 'semibold', size: 3.05, fill: WH });
+      const y = ROW0 + i * ROW_STEP;
+      return plateNum(i, L, y, 2.8) + T(s, L + 5.3, y, { font: 'semibold', size: ROW_SIZE, fill: WH });
     }).join('');
     return rect(0, 0, H_.W, H_.H, GR) +
       T('Услуги', L, 11.7, { font: 'brand', size: 5.6, fill: OR }) +
@@ -308,9 +310,9 @@ variants.push({
     const cx = (panelX + H_.W - BLEED) / 2;
     const q = qr(SERVICES_URL, cx - qs / 2, TOP + 4 * m - 1.4, qs, { tile: true, tileR: 1.6 });
     const rows = SERVICES.map((s, i) => {
-      const y = 19.4 + i * 4.9;
-      return `<circle cx="${L + 0.9}" cy="${r3(y - 1.1)}" r="0.9" fill="${WH}"/>` +
-        T(s, L + 3.4, y, { font: 'semibold', size: 3.1, fill: WH });
+      const y = ROW0 + 0.3 + i * ROW_STEP;
+      return `<circle cx="${L + 0.85}" cy="${r3(y - 1.05)}" r="0.85" fill="${WH}"/>` +
+        T(s, L + 3.2, y, { font: 'semibold', size: ROW_SIZE + 0.05, fill: WH });
     }).join('');
     const tw = outer - 2;
     return rect(0, 0, H_.W, H_.H, OR) + q.svg +
@@ -344,10 +346,10 @@ variants.push({
     const cx = V_.W / 2;
     const q = qr(SERVICES_URL, cx - 10, 50.4, 20);
     const rows = SERVICES.map((s, i) => {
-      const y = 22.0 + i * 6.4;
+      const y = 21.4 + i * 5.4;
       return T(`0${i + 1}`, VL, y, { font: 'brand', size: 2.5, fill: OR }) +
-        T(s, VL + 6.5, y, { font: 'semibold', size: 3.05 }) +
-        rect(VL, y + 2.3, VR - VL, 0.25, LINE);
+        T(s, VL + 6.5, y, { font: 'semibold', size: 2.95 }) +
+        rect(VL, y + 1.9, VR - VL, 0.25, LINE);
     }).join('');
     return rect(0, 0, V_.W, V_.H, WH) +
       T('Услуги', VL, 13.4, { font: 'brand', size: 5.4 }) +
