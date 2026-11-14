@@ -141,7 +141,8 @@ class CheckoutService:
                     slug=product.slug,
                     name=product.name,
                     unit=product.unit,
-                    image=product.images[0] if product.images else None,
+                    # Пока своего фото нет — фото поставщика по ссылке
+                    image=product.images[0] if product.images else (offer.picture_url if offer else None),
                     quantity=quantity,
                     unit_price=product.price,
                     total=(product.price * quantity).quantize(CENT),

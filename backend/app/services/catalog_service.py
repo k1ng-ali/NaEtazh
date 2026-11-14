@@ -60,7 +60,7 @@ class CatalogService:
             skip=skip,
             limit=limit,
         )
-        return ProductListOut(items=[ProductOut.model_validate(item) for item in items], total=total)
+        return ProductListOut(items=await self._with_pictures(items), total=total)
 
     async def get_product(self, slug: str) -> ProductDetailOut:
         product = await self.repo.get_published_product_by_slug(slug=slug)
@@ -77,4 +77,22 @@ class CatalogService:
             availability = AvailabilityEnum.on_order
         else:
             availability = AvailabilityEnum.unavailable
-        return ProductDetailOut(**ProductOut.model_validate(product).model_dump(), availability=availability)
+        (out,) = await self._with_pictures([product])
+        return ProductDetailOut(**out.model_dump(), availability=availability)
+
+    async def _with_pictures(self, products: list) -> list[ProductOut]:
+        """
+        Пока импорт не скопировал фото к себе, показываем фото поставщика по прямой ссылке.
+
+        Поставщик разрешил использовать фото; ссылка выдаёт его адрес, поэтому свои копии
+        по-прежнему качаются и заменяют ссылку, как только появятся.
+        """
+        without_photo = [product.id for product in products if not product.images]
+        pictures = await self.repo.get_partner_pictures(without_photo)
+        result = []
+        for product in products:
+            out = ProductOut.model_validate(product)
+            if not out.images and product.id in pictures:
+                out = out.model_copy(update={"images": [pictures[product.id]]})
+            result.append(out)
+        return result

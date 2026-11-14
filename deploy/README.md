@@ -119,12 +119,22 @@ docker compose -f docker-compose.prod.yml exec backend python -m scripts.create_
 docker compose -f docker-compose.prod.yml exec -T backend python -m scripts.sync_suppliers --photos 5000
 ```
 
-На сервере, где был демо-каталог, один раз перенести его 100 товаров в разделы партнёра и
-убрать старые 11 разделов:
+Убрать демо-данные: 100 товаров демо-каталога, 11 демо-разделов, товары `DEMO-*` и
+тестовые. Сначала проверка — скрипт только покажет, что найдёт:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec -T backend python -m scripts.retire_demo_catalog
+docker compose -f docker-compose.prod.yml exec -T backend python -m scripts.cleanup_demo
 ```
+
+Если список верный — удалить:
+
+```bash
+docker compose -f docker-compose.prod.yml exec -T backend python -m scripts.cleanup_demo --apply
+```
+
+Товары из заказов уходят в архив, остальные удаляются вместе с фото, пустые демо-разделы
+удаляются. Свои товары, заведённые вручную в обычных разделах, не трогаются. Если тумблер
+партнёра включён, импорт сразу заводит товары партнёра заново в разделах как у партнёра.
 
 ## Обновление
 

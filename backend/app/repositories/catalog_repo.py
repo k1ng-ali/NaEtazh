@@ -29,6 +29,26 @@ def _category_subtree_ids(slug: str) -> Select:
     return select(tree.c.id)
 
 
+def partner_picture():
+    """Фото товара в выгрузке поставщика: сначала у предложения в наличии."""
+    return (
+        select(SupplierOffer.picture_url)
+        .where(
+            SupplierOffer.product_id == Product.id,
+            SupplierOffer.is_active == True,  # noqa: E712
+            SupplierOffer.picture_url.is_not(None),
+        )
+        .order_by((SupplierOffer.quantity > 0).desc(), SupplierOffer.id)
+        .limit(1)
+        .scalar_subquery()
+    )
+
+
+def product_picture():
+    """Своё фото, а пока импорт его не скачал — фото поставщика по ссылке."""
+    return func.coalesce(Product.images[0].astext, partner_picture())
+
+
 def visible_product_conditions() -> list[ColumnElement[bool]]:
     """
     Товар виден покупателю: опубликован, раздел включён и товар можно купить.
@@ -91,6 +111,7 @@ class CatalogRepository(BaseRepository):
     async def get_category_photos(self) -> dict[int, tuple[str, float]]:
         """
         Фото самого ходового товара с фото в каждом разделе, где есть что купить.
+        Своё фото или, пока его нет, фото поставщика по ссылке.
 
         Ходовой — с наибольшим остатком у поставщика: этот товар точно есть и он популярный.
         Возвращает раздел → (фото, остаток), остаток нужен, чтобы выбрать лучшее из подразделов.
@@ -100,9 +121,10 @@ class CatalogRepository(BaseRepository):
             .where(SupplierOffer.product_id == Product.id, SupplierOffer.is_active == True)  # noqa: E712
             .scalar_subquery()
         )
+        picture = product_picture()
         result = await self.db.execute(
-            select(Product.category_id, Product.images[0].astext, stock)
-            .where(*visible_product_conditions(), func.jsonb_array_length(Product.images) > 0)
+            select(Product.category_id, picture, stock)
+            .where(*visible_product_conditions(), picture.is_not(None))
             .distinct(Product.category_id)
             .order_by(Product.category_id, stock.desc(), Product.id)
         )
@@ -126,12 +148,28 @@ class CatalogRepository(BaseRepository):
         result = await self.db.execute(
             select(Product)
             .where(*conditions)
-            # Пока импорт докачивает фото, товары с фото показываем первыми
-            .order_by((func.jsonb_array_length(Product.images) > 0).desc(), Product.name, Product.id)
+            # Товары без фото, даже у поставщика, в конце списка
+            .order_by(product_picture().is_(None), Product.name, Product.id)
             .offset(skip)
             .limit(limit)
         )
         return list(result.scalars().all()), total.scalar() or 0
+
+    async def get_partner_pictures(self, product_ids: list[int]) -> dict[int, str]:
+        """Фото поставщика для товаров, у которых ещё нет своего фото."""
+        if not product_ids:
+            return {}
+        result = await self.db.execute(
+            select(SupplierOffer.product_id, SupplierOffer.picture_url)
+            .where(
+                SupplierOffer.product_id.in_(product_ids),
+                SupplierOffer.is_active == True,  # noqa: E712
+                SupplierOffer.picture_url.is_not(None),
+            )
+            .distinct(SupplierOffer.product_id)
+            .order_by(SupplierOffer.product_id, (SupplierOffer.quantity > 0).desc(), SupplierOffer.id)
+        )
+        return dict(result.all())
 
     async def get_published_product_by_slug(self, slug: str) -> Product | None:
         """Карточка открывается и без наличия: ссылки из мессенджеров не должны вести в 404."""
