@@ -5,6 +5,7 @@ from app.api.admin.dashboard import router as admin_dashboard_router
 from app.api.admin.locations import router as admin_locations_router
 from app.api.admin.orders import router as admin_orders_router
 from app.api.admin.pricing import router as admin_pricing_router
+from app.api.admin.product_prices import router as admin_product_prices_router
 from app.api.admin.services import router as admin_services_router
 from app.api.admin.users import router as admin_users_router
 
@@ -43,5 +44,6 @@ api_router.include_router(admin_dashboard_router, prefix="/admin")
 api_router.include_router(admin_orders_router, prefix="/admin")
 api_router.include_router(admin_users_router, prefix="/admin")
 api_router.include_router(admin_pricing_router, prefix="/admin")
+api_router.include_router(admin_product_prices_router, prefix="/admin")
 api_router.include_router(admin_locations_router, prefix="/admin")
 api_router.include_router(admin_services_router, prefix="/admin")

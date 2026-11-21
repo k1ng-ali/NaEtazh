@@ -7,6 +7,7 @@ import type { PricingRule } from '~/features/staff/pricing/types'
 import { errorMessage } from '~/features/staff/shared/errors'
 import { useToast } from '~/features/staff/shared/toast'
 import { calcSalePrice } from '~/features/staff/pricing/calc'
+import PricingTabs from '~/features/staff/pricing/components/PricingTabs.vue'
 import { formatPrice } from '~/shared/lib/format'
 
 definePageMeta({ layout: 'staff', middleware: 'staff', roles: ['admin'] })
@@ -90,6 +91,8 @@ onMounted(() => Promise.all([load(), catalog.loadCategories()]))
         <p class="a-muted">Для товаров партнёра с автоматической ценой. Пересчёт сразу после сохранения и при каждом импорте.</p>
       </div>
     </div>
+
+    <PricingTabs />
 
     <p v-if="loadError" class="a-error" role="alert">{{ loadError }}</p>
 

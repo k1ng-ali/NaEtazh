@@ -1,9 +1,16 @@
-from sqlalchemy import ColumnElement, Select, and_, func, or_, select
+from sqlalchemy import ColumnElement, Select, and_, false, func, literal, literal_column, or_, select
 
+from app.core.search import (
+    MIN_FUZZY_LENGTH,
+    MIN_STEM_LENGTH,
+    WORD_SIMILARITY_THRESHOLD,
+    latin_variant,
+    search_terms,
+)
 from app.enums.product_status import ProductStatusEnum
 from app.models.catalog import Category, Product
 from app.models.inventory import StockItem, Supplier, SupplierOffer, Warehouse
-from app.models.pricing import PricingRule
+from app.models.pricing import PricingRule, ProductPrice
 from app.repositories.base_repo import BaseRepository
 
 
@@ -54,7 +61,8 @@ def visible_product_conditions() -> list[ColumnElement[bool]]:
     Товар виден покупателю: опубликован, раздел включён и товар можно купить.
 
     Купить можно со своего склада или у поставщика, включённого на витрине. Товар поставщика
-    с автоматической ценой виден только при правиле наценки, иначе цена равна закупочной.
+    с автоматической ценой виден только при точной цене или правиле наценки, иначе цена равна
+    закупочной.
     """
     own_stock = (
         select(StockItem.id)
@@ -80,6 +88,7 @@ def visible_product_conditions() -> list[ColumnElement[bool]]:
     )
     priced = or_(
         Product.is_price_manual == True,  # noqa: E712
+        select(ProductPrice.id).where(ProductPrice.product_id == Product.id).exists(),
         select(PricingRule.id)
         .where(or_(PricingRule.category_id.is_(None), PricingRule.category_id == Product.category_id))
         .exists(),
@@ -89,6 +98,41 @@ def visible_product_conditions() -> list[ColumnElement[bool]]:
         Product.category_id.in_(_active_category_ids()),
         or_(own_stock, and_(partner_stock, priced)),
     ]
+
+
+def _term_matches(term: str) -> ColumnElement[bool]:
+    """
+    Слово запроса есть в товаре: как часть строки («рот» → «Ротбанд»), в другой форме
+    («плитки» → «плитка») или с опечаткой («ротбнд» → «Ротбанд»).
+    """
+    options = [Product.search_text.contains(term, autoescape=True)]
+    if len(term) >= MIN_STEM_LENGTH:
+        options.append(
+            Product.search_vector.op("@@")(func.plainto_tsquery(literal_column("'russian'::regconfig"), term))
+        )
+    if len(term) >= MIN_FUZZY_LENGTH:
+        # word_similarity не ниже pg_trgm.word_similarity_threshold, его ставит get_published_products
+        options.append(literal(term).op("<%")(Product.search_text))
+    latin = latin_variant(term)
+    if latin and latin != term:
+        options.append(Product.search_text.contains(latin, autoescape=True))
+        if len(latin) >= MIN_FUZZY_LENGTH:
+            options.append(literal(latin).op("<%")(Product.search_text))
+    return or_(*options)
+
+
+def search_conditions(query: str) -> tuple[ColumnElement[bool], list[ColumnElement]]:
+    """
+    Условие поиска и порядок результатов. Каждое слово запроса должно найтись в товаре.
+
+    Сначала товары, где все слова есть как написаны, затем по похожести на запрос.
+    """
+    terms = search_terms(query)
+    if not terms:
+        return false(), []
+    exact = and_(*[Product.search_text.contains(term, autoescape=True) for term in terms])
+    similarity = func.word_similarity(" ".join(terms), Product.search_text)
+    return and_(*[_term_matches(term) for term in terms]), [exact.desc(), similarity.desc()]
 
 
 class CatalogRepository(BaseRepository):
@@ -139,17 +183,25 @@ class CatalogRepository(BaseRepository):
     ) -> tuple[list[Product], int]:
         """Товары, которые можно купить. Раздел включает свои подразделы."""
         conditions = visible_product_conditions()
+        relevance: list[ColumnElement] = []
         if category_slug:
             conditions.append(Product.category_id.in_(_category_subtree_ids(category_slug)))
         if search:
-            conditions.append(Product.name.icontains(search, autoescape=True))
+            matches, relevance = search_conditions(search)
+            conditions.append(matches)
+            # Только до конца транзакции: подсчёт и выборка ниже идут в ней же
+            await self.db.execute(
+                select(
+                    func.set_config("pg_trgm.word_similarity_threshold", str(WORD_SIMILARITY_THRESHOLD), True)
+                )
+            )
 
         total = await self.db.execute(select(func.count(Product.id)).where(*conditions))
         result = await self.db.execute(
             select(Product)
             .where(*conditions)
-            # Товары без фото, даже у поставщика, в конце списка
-            .order_by(product_picture().is_(None), Product.name, Product.id)
+            # При поиске сначала подходящие, товары без фото, даже у поставщика, в конце списка
+            .order_by(*relevance, product_picture().is_(None), Product.name, Product.id)
             .offset(skip)
             .limit(limit)
         )

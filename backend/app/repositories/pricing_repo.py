@@ -2,7 +2,7 @@ from sqlalchemy import select
 
 from app.models.catalog import Product
 from app.models.inventory import Supplier, SupplierOffer
-from app.models.pricing import PricingRule
+from app.models.pricing import PricingRule, ProductPrice
 from app.repositories.base_repo import BaseRepository
 
 
@@ -74,16 +74,53 @@ class PricingRepository(BaseRepository):
         """
         Предложения, из которых можно продавать покупателю.
 
-        Поставщик включён на витрине, а цена товара задана вручную или посчитана по наценке:
-        без правила наценки автоматическая цена равна закупочной.
+        Поставщик включён на витрине, а цена товара задана вручную, точной ценой или посчитана
+        по наценке: без правила наценки автоматическая цена равна закупочной.
         """
         offers = await self.get_best_offers([product.id for product in products], storefront_only=True)
         if not offers:
             return {}
         rule_categories = {rule.category_id for rule in await self.get_rules()}
+        fixed = await self.get_product_prices(product_ids=list(offers))
         priced = {
             product.id
             for product in products
-            if product.is_price_manual or None in rule_categories or product.category_id in rule_categories
+            if product.is_price_manual
+            or product.id in fixed
+            or None in rule_categories
+            or product.category_id in rule_categories
         }
         return {product_id: offer for product_id, offer in offers.items() if product_id in priced}
+
+    # ─── Точные цены товаров ──────────────────────────────────────────────────
+
+    async def get_product_prices(self, product_ids: list[int] | None = None) -> dict[int, ProductPrice]:
+        query = select(ProductPrice)
+        if product_ids is not None:
+            query = query.where(ProductPrice.product_id.in_(product_ids))
+        result = await self.db.execute(query)
+        return {row.product_id: row for row in result.scalars().all()}
+
+    async def get_product_prices_with_products(self) -> list[tuple[ProductPrice, Product]]:
+        result = await self.db.execute(
+            select(ProductPrice, Product)
+            .join(Product, Product.id == ProductPrice.product_id)
+            .order_by(Product.name, Product.id)
+        )
+        return [(row, product) for row, product in result.all()]
+
+    async def get_product_price_for_update(self, product_id: int) -> ProductPrice | None:
+        result = await self.db.execute(
+            select(ProductPrice).where(ProductPrice.product_id == product_id).with_for_update()
+        )
+        return result.scalar_one_or_none()
+
+    async def create_product_price(self, **values) -> ProductPrice:
+        row = ProductPrice(**values)
+        self.db.add(row)
+        await self.db.flush()
+        return row
+
+    async def delete_product_price(self, row: ProductPrice) -> None:
+        await self.db.delete(row)
+        await self.db.flush()

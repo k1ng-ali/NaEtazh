@@ -10,14 +10,16 @@ from sqlalchemy import (
     BigInteger,
     Boolean,
     Column,
+    Computed,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
     Text,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 
 from app.core.database import Base
 from app.enums.product_status import ProductStatusEnum
@@ -37,8 +39,17 @@ class Category(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
 
 
+# Название и бренд для поиска, правила нормализации — в app/core/search.py
+PRODUCT_SEARCH_TEXT_SQL = "translate(lower(name || ' ' || coalesce(attributes ->> 'Бренд', '')), 'ёx', 'ех')"
+
+
 class Product(Base):
     __tablename__ = "products"
+    __table_args__ = (
+        Index("ix_products_search_text_trgm", "search_text", postgresql_using="gin",
+              postgresql_ops={"search_text": "gin_trgm_ops"}),
+        Index("ix_products_search_vector", "search_vector", postgresql_using="gin"),
+    )  # fmt: skip
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     category_id = Column(
@@ -60,6 +71,13 @@ class Product(Base):
     images = Column(JSONB, nullable=False, default=list, server_default="[]")
     # Характеристики для карточки и фильтров
     attributes = Column(JSONB, nullable=False, default=dict, server_default="{}")
+    # Считает база: строка для поиска по подстроке и опечаткам и она же со словоформами
+    search_text = Column(Text, Computed(PRODUCT_SEARCH_TEXT_SQL, persisted=True), nullable=False)
+    search_vector = Column(
+        TSVECTOR,
+        Computed(f"to_tsvector('russian'::regconfig, {PRODUCT_SEARCH_TEXT_SQL})", persisted=True),
+        nullable=False,
+    )
     status = Column(
         String,
         nullable=False,

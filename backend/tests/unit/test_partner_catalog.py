@@ -129,18 +129,21 @@ async def test_create_products_publishes_offers_with_auto_price():
 async def test_sellable_offers_need_storefront_supplier_and_markup():
     repo = PricingRepository(db=AsyncMock())
     offer = SimpleNamespace(quantity=Decimal("5"))
-    repo.get_best_offers = AsyncMock(return_value={1: offer, 2: offer, 3: offer})
+    repo.get_best_offers = AsyncMock(return_value={1: offer, 2: offer, 3: offer, 4: offer})
     repo.get_rules = AsyncMock(return_value=[SimpleNamespace(category_id=20)])
+    # У товара 4 нет правила наценки, зато есть точная цена
+    repo.get_product_prices = AsyncMock(return_value={4: SimpleNamespace(price=Decimal("100"))})
     products = [
         SimpleNamespace(id=1, category_id=10, is_price_manual=True),
         SimpleNamespace(id=2, category_id=20, is_price_manual=False),
         SimpleNamespace(id=3, category_id=30, is_price_manual=False),
+        SimpleNamespace(id=4, category_id=30, is_price_manual=False),
     ]
 
     offers = await repo.get_sellable_offers(products)
 
-    repo.get_best_offers.assert_awaited_once_with([1, 2, 3], storefront_only=True)
-    assert set(offers) == {1, 2}
+    repo.get_best_offers.assert_awaited_once_with([1, 2, 3, 4], storefront_only=True)
+    assert set(offers) == {1, 2, 4}
 
 
 async def test_list_categories_shows_parents_of_visible_and_hides_under_inactive():

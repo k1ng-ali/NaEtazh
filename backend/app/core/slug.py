@@ -9,8 +9,13 @@ _TRANSLIT = {
 }  # fmt: skip
 
 
+def transliterate(value: str) -> str:
+    """«кнауф» → «knauf». Латиница и цифры остаются как есть."""
+    return "".join(_TRANSLIT.get(char, char) for char in value.lower())
+
+
 def slugify(value: str, max_length: int = 80) -> str:
     """«Штукатурка Ротбанд, 30 кг» → «shtukaturka-rotband-30-kg»."""
-    text = "".join(_TRANSLIT.get(char, char) for char in value.lower())
+    text = transliterate(value)
     text = re.sub(r"[^a-z0-9]+", "-", text).strip("-")
     return text[:max_length].rstrip("-") or "item"
