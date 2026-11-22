@@ -5,10 +5,12 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.enums.order import AllocationSourceEnum, DeliverySlotEnum, OrderEventActionEnum, OrderStatusEnum
+from app.enums.product_status import ProductStatusEnum
 from app.enums.role import UserRoleEnum
-from app.models.order import Order, OrderEvent
+from app.models.order import Order, OrderEvent, OrderLine
 from app.repositories.location_repo import LocationRepository
 from app.repositories.order_repo import OrderRepository
+from app.repositories.pricing_repo import PricingRepository
 from app.repositories.user_repo import UserRepository
 from app.schemas.admin_order import (
     AllocationOut,
@@ -16,12 +18,13 @@ from app.schemas.admin_order import (
     OrderDeliveryIn,
     OrderEventOut,
     OrderLineAdmin,
+    OrderLineIn,
     OrderListOutAdmin,
     OrderOutAdmin,
     OrderRowAdmin,
     ServiceLineAdmin,
 )
-from app.services.checkout_service import format_address
+from app.services.checkout_service import allocate_line, format_address
 
 ZERO = Decimal("0")
 
@@ -36,6 +39,9 @@ TRANSITIONS: dict[OrderStatusEnum, list[OrderStatusEnum]] = {
     S.canceled: [],
 }
 FINAL_STATUSES = (S.delivered, S.canceled)
+# Состав меняем, пока заказ не уехал к покупателю
+EDITABLE_STATUSES = (S.new, S.checking, S.confirmed)
+CENT = Decimal("0.01")
 
 SLOT_LABELS = {
     DeliverySlotEnum.morning.value: "утро",
@@ -50,6 +56,7 @@ class AdminOrderService:
         self.repo = OrderRepository(db=db)
         self.locations = LocationRepository(db=db)
         self.users = UserRepository(db=db)
+        self.pricing = PricingRepository(db=db)
 
     # ─── Чтение ───────────────────────────────────────────────────────────────
 
@@ -171,6 +178,61 @@ class AdminOrderService:
                 user_id=user_id,
                 action=OrderEventActionEnum.delivery.value,
                 comment=", ".join(parts),
+            )
+        )
+        await self.db.commit()
+        await self.db.refresh(order)
+        return await self._order_out(order)
+
+    async def add_line(self, order_id: int, data: OrderLineIn, user_id: int) -> OrderOutAdmin:
+        """
+        Менеджер добавляет товар в заказ, например по просьбе покупателя по телефону.
+
+        Количество берётся как при оформлении: свой склад с резервом, остаток у партнёра.
+        Тот же товар по той же цене добавляется к уже имеющейся строке. Услуги не
+        пересчитываются: доставку и подъём менеджер обсуждает с покупателем.
+        """
+        order = await self._get_order_for_update_or_404(order_id)
+        if OrderStatusEnum(order.status) not in EDITABLE_STATUSES:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Order can not be changed")
+
+        product = (await self.repo.get_products([data.product_id])).get(data.product_id)
+        if product is None or product.status == ProductStatusEnum.archived.value:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+        unit_price = data.unit_price or product.price
+        offer = (await self.pricing.get_best_offers([product.id], storefront_only=True)).get(product.id)
+
+        line = next(
+            (
+                line
+                for line in await self.repo.get_lines(order_id=order.id)
+                if line.product_id == product.id and line.unit_price == unit_price
+            ),
+            None,
+        )
+        # Распределяем только добавленное количество, отдельной строкой-черновиком
+        added = OrderLine(
+            order_id=order.id,
+            product_id=product.id,
+            name=product.name,
+            unit=product.unit,
+            quantity=data.quantity,
+            unit_price=unit_price,
+            total=(unit_price * data.quantity).quantize(CENT),
+        )
+        await self.repo.add(added)
+        await allocate_line(self.repo, order_line=added, offer=offer)
+        if line is not None:
+            await self.repo.merge_line(target=line, source=added)
+
+        order.goods_total += added.total
+        order.total += added.total
+        await self.repo.add(
+            OrderEvent(
+                order_id=order.id,
+                user_id=user_id,
+                action=OrderEventActionEnum.line_added.value,
+                comment=f"{product.name}: {data.quantity.normalize():f} {product.unit} × {unit_price:.0f} ₽",
             )
         )
         await self.db.commit()

@@ -55,3 +55,5 @@ class OrderEventActionEnum(str, Enum):
     delivery = "delivery"
     # Курьер сообщил о проблеме
     problem = "problem"
+    # Менеджер добавил товар в заказ
+    line_added = "line_added"

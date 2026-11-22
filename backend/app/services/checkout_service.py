@@ -68,6 +68,45 @@ def format_address(
     return ", ".join(parts)
 
 
+async def allocate_line(repo: OrderRepository, order_line: OrderLine, offer: SupplierOffer | None) -> None:
+    """
+    Сначала свой склад с резервом, остаток у партнёра. Не делает commit.
+
+    Им пользуются оформление заказа и добавление товара менеджером.
+    """
+    remaining = order_line.quantity
+    # Строки склада заблокированы до commit: два заказа не зарезервируют один мешок
+    for stock in await repo.get_stock_items_for_update(product_id=order_line.product_id):
+        take = min(stock.quantity - stock.reserved, remaining)
+        if take <= 0:
+            continue
+        stock.reserved += take
+        remaining -= take
+        await repo.add(
+            OrderAllocation(
+                order_line_id=order_line.id,
+                source_type=AllocationSourceEnum.warehouse.value,
+                warehouse_id=stock.warehouse_id,
+                quantity=take,
+                unit_cost=stock.unit_cost,
+            )
+        )
+        if remaining <= 0:
+            return
+
+    if offer is None or offer.quantity < remaining:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Not enough stock")
+    await repo.add(
+        OrderAllocation(
+            order_line_id=order_line.id,
+            source_type=AllocationSourceEnum.supplier.value,
+            supplier_offer_id=offer.id,
+            quantity=remaining,
+            unit_cost=offer.price,
+        )
+    )
+
+
 class CheckoutService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -256,7 +295,7 @@ class CheckoutService:
                 total=line.total,
             )
             await self.repo.add(order_line)
-            await self._allocate(order_line=order_line, offer=calc.offers.get(line.product_id))
+            await allocate_line(self.repo, order_line=order_line, offer=calc.offers.get(line.product_id))
 
         for service in quote.services:
             await self.repo.add(
@@ -273,40 +312,6 @@ class CheckoutService:
         created = OrderCreatedOut(number=order.id, public_token=order.public_token)
         return created, self._notification_text(
             order, quote, format_address(order, calc.building, calc.complex_)
-        )
-
-    async def _allocate(self, order_line: OrderLine, offer: SupplierOffer | None) -> None:
-        """Сначала свой склад с резервом, остаток у партнёра."""
-        remaining = order_line.quantity
-        # Строки склада заблокированы до commit: два заказа не зарезервируют один мешок
-        for stock in await self.repo.get_stock_items_for_update(product_id=order_line.product_id):
-            take = min(stock.quantity - stock.reserved, remaining)
-            if take <= 0:
-                continue
-            stock.reserved += take
-            remaining -= take
-            await self.repo.add(
-                OrderAllocation(
-                    order_line_id=order_line.id,
-                    source_type=AllocationSourceEnum.warehouse.value,
-                    warehouse_id=stock.warehouse_id,
-                    quantity=take,
-                    unit_cost=stock.unit_cost,
-                )
-            )
-            if remaining <= 0:
-                return
-
-        if offer is None or offer.quantity < remaining:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Not enough stock")
-        await self.repo.add(
-            OrderAllocation(
-                order_line_id=order_line.id,
-                source_type=AllocationSourceEnum.supplier.value,
-                supplier_offer_id=offer.id,
-                quantity=remaining,
-                unit_cost=offer.price,
-            )
         )
 
     @staticmethod

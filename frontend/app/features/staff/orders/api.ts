@@ -1,6 +1,14 @@
 import type { OrderStatus } from '~/features/checkout/types'
 import { useStaffHttp } from '../shared/http'
-import type { Courier, DeliveryPayload, OrderAdmin, OrderFilters, OrderMoney, OrderRowList } from './types'
+import type {
+  Courier,
+  DeliveryPayload,
+  OrderAdmin,
+  OrderFilters,
+  OrderLinePayload,
+  OrderMoney,
+  OrderRowList,
+} from './types'
 
 export const useStaffOrdersApi = () => {
   const http = useStaffHttp()
@@ -13,6 +21,8 @@ export const useStaffOrdersApi = () => {
       http<OrderAdmin>(`/manager/orders/${id}/status`, { method: 'POST', body: { status } }),
     setDelivery: (id: number, payload: DeliveryPayload) =>
       http<OrderAdmin>(`/manager/orders/${id}/delivery`, { method: 'PUT', body: payload }),
+    addLine: (id: number, payload: OrderLinePayload) =>
+      http<OrderAdmin>(`/manager/orders/${id}/lines`, { method: 'POST', body: payload }),
     listCouriers: () => http<Courier[]>('/manager/couriers/'),
 
     // ── Только владелец: расходы и прибыль ──

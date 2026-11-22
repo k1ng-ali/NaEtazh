@@ -11,6 +11,7 @@ function title(event: OrderEvent) {
   if (event.action === 'created') return 'Заказ оформлен'
   if (event.action === 'delivery') return 'Доставка'
   if (event.action === 'problem') return 'Проблема'
+  if (event.action === 'line_added') return 'Добавлен товар'
   return event.status ? ORDER_STATUS[event.status] : 'Статус'
 }
 </script>

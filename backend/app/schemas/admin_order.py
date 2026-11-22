@@ -150,6 +150,13 @@ class OrderDeliveryIn(BaseModel):
     planned_slot: DeliverySlotEnum | None = None
 
 
+class OrderLineIn(BaseModel):
+    product_id: int
+    quantity: Decimal = Field(gt=0, le=10000, max_digits=12, decimal_places=3)
+    # Пусто: текущая цена товара. Менеджер может указать цену, о которой договорился
+    unit_price: Decimal | None = Field(None, gt=0, max_digits=12, decimal_places=2)
+
+
 class ServiceCostIn(BaseModel):
     cost: Decimal | None = Field(None, ge=0, max_digits=12, decimal_places=2)
 

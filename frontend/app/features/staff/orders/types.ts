@@ -57,7 +57,7 @@ export interface ServiceLineAdmin {
   cost?: string | null
 }
 
-export type OrderEventAction = 'created' | 'status' | 'delivery' | 'problem'
+export type OrderEventAction = 'created' | 'status' | 'delivery' | 'problem' | 'line_added'
 
 export interface OrderEvent {
   action: OrderEventAction
@@ -70,6 +70,13 @@ export interface OrderEvent {
 export interface Courier {
   id: number
   name: string
+}
+
+export interface OrderLinePayload {
+  product_id: number
+  quantity: string
+  // Пусто: текущая цена товара
+  unit_price: string | null
 }
 
 export interface DeliveryPayload {

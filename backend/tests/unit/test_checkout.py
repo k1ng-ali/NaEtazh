@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from app.core.delivery import calc_delivery_price, calc_lifting_price
 from app.core.phone import normalize_phone
 from app.enums.order import LiftingTypeEnum
-from app.services.checkout_service import CheckoutService
+from app.services.checkout_service import CheckoutService, allocate_line
 
 TARIFF = {
     "lift_price_per_100kg": Decimal("150"),
@@ -70,7 +70,7 @@ async def test_allocate_takes_stock_first_then_supplier():
     line = SimpleNamespace(id=10, product_id=5, quantity=Decimal("20"))
     offer = SimpleNamespace(id=7, quantity=Decimal("150"), price=Decimal("1150"))
 
-    await service._allocate(order_line=line, offer=offer)
+    await allocate_line(service.repo, order_line=line, offer=offer)
 
     allocations = [call.args[0] for call in service.repo.add.await_args_list]
     assert [(a.source_type, a.quantity) for a in allocations] == [
@@ -87,8 +87,10 @@ async def test_allocate_fails_without_enough_supplier_stock():
     line = SimpleNamespace(id=10, product_id=5, quantity=Decimal("20"))
 
     with pytest.raises(HTTPException) as exc:
-        await service._allocate(
-            order_line=line, offer=SimpleNamespace(id=7, quantity=Decimal("3"), price=Decimal("1"))
+        await allocate_line(
+            service.repo,
+            order_line=line,
+            offer=SimpleNamespace(id=7, quantity=Decimal("3"), price=Decimal("1")),
         )
 
     assert exc.value.status_code == 409

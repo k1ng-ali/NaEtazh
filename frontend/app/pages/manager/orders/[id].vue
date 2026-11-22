@@ -2,10 +2,18 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useAuthStore } from '~/features/staff/auth/store'
 import { useStaffOrdersApi } from '~/features/staff/orders/api'
+import OrderAddLineForm from '~/features/staff/orders/components/OrderAddLineForm.vue'
 import OrderDeliveryForm from '~/features/staff/orders/components/OrderDeliveryForm.vue'
 import OrderHistory from '~/features/staff/orders/components/OrderHistory.vue'
 import OrderStatusBadge from '~/features/staff/orders/components/OrderStatusBadge.vue'
-import type { Courier, DeliveryPayload, OrderAdmin, OrderMoney, ServiceLineAdmin } from '~/features/staff/orders/types'
+import type {
+  Courier,
+  DeliveryPayload,
+  OrderAdmin,
+  OrderLinePayload,
+  OrderMoney,
+  ServiceLineAdmin,
+} from '~/features/staff/orders/types'
 import { errorMessage } from '~/features/staff/shared/errors'
 import { useToast } from '~/features/staff/shared/toast'
 import { CONTACT_CHANNEL, DELIVERY_SLOT, LIFTING, MISSING_ITEM_POLICY } from '~/features/checkout/labels'
@@ -27,6 +35,9 @@ const money = computed(() => (order.value && 'profit' in order.value ? (order.va
 const loadError = ref('')
 const isSaving = ref(false)
 const costs = reactive<Record<number, string>>({})
+const isAddingLine = ref(false)
+// Состав меняем, пока заказ не уехал к покупателю
+const canEditLines = computed(() => !!order.value && ['new', 'checking', 'confirmed'].includes(order.value.status))
 
 useHead(() => ({ title: order.value ? `Заказ № ${order.value.id} | Кабинет` : 'Заказ | Кабинет' }))
 
@@ -91,6 +102,21 @@ async function saveDelivery(payload: DeliveryPayload) {
     const updated = await api.setDelivery(order.value.id, payload)
     auth.isAdmin ? await reload(updated.id) : apply(updated)
     toast.success('Доставка сохранена')
+  } catch (error) {
+    toast.error(errorMessage(error))
+  } finally {
+    isSaving.value = false
+  }
+}
+
+async function addLine(payload: OrderLinePayload) {
+  if (!order.value) return
+  isSaving.value = true
+  try {
+    const updated = await api.addLine(order.value.id, payload)
+    auth.isAdmin ? await reload(updated.id) : apply(updated)
+    isAddingLine.value = false
+    toast.success('Товар добавлен')
   } catch (error) {
     toast.error(errorMessage(error))
   } finally {
@@ -172,7 +198,17 @@ onMounted(load)
           </section>
 
           <section class="a-card">
-            <h2 class="a-subtitle">Состав</h2>
+            <div class="lines-head">
+              <h2 class="a-subtitle">Состав</h2>
+              <button
+                v-if="canEditLines && !isAddingLine"
+                class="a-btn a-btn--ghost a-btn--small"
+                type="button"
+                @click="isAddingLine = true"
+              >
+                + Добавить товар
+              </button>
+            </div>
             <div v-for="line in order.lines" :key="line.id" class="line">
               <div class="line__head">
                 <NuxtLink :to="`/manager/products/${line.product_id}`" class="line__name">{{ line.name }}</NuxtLink>
@@ -194,6 +230,7 @@ onMounted(load)
                 </li>
               </ul>
             </div>
+            <OrderAddLineForm v-if="canEditLines && isAddingLine" :is-saving="isSaving" @save="addLine" @cancel="isAddingLine = false" />
           </section>
 
           <section class="a-card">
@@ -312,6 +349,13 @@ onMounted(load)
     flex-direction: column;
     gap: 16px;
   }
+}
+
+.lines-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .line {

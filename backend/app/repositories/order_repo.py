@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import exists, func, or_, select
+from sqlalchemy import exists, func, or_, select, update
 
 from app.enums.order import AllocationSourceEnum, OrderStatusEnum
 from app.models.catalog import Product
@@ -63,6 +63,18 @@ class OrderRepository(BaseRepository):
             select(OrderLine).where(OrderLine.order_id == order_id).order_by(OrderLine.id)
         )
         return list(result.scalars().all())
+
+    async def merge_line(self, target: OrderLine, source: OrderLine) -> None:
+        """Переносит количество и распределение source в target и удаляет source."""
+        await self.db.execute(
+            update(OrderAllocation)
+            .where(OrderAllocation.order_line_id == source.id)
+            .values(order_line_id=target.id)
+        )
+        target.quantity += source.quantity
+        target.total += source.total
+        await self.db.delete(source)
+        await self.db.flush()
 
     async def get_services(self, order_id: int) -> list[OrderServiceLine]:
         result = await self.db.execute(

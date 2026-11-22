@@ -6,6 +6,7 @@ from app.enums.order import OrderStatusEnum
 from app.schemas.admin_order import (
     CourierOut,
     OrderDeliveryIn,
+    OrderLineIn,
     OrderListOutAdmin,
     OrderOutManager,
     OrderStatusIn,
@@ -56,6 +57,16 @@ async def set_delivery(
     service: AdminOrderService = Depends(get_admin_order_service),
 ):
     return await service.set_delivery(order_id=order_id, data=data, user_id=user.id)
+
+
+@router.post("/orders/{order_id}/lines", response_model=OrderOutManager)
+async def add_line(
+    order_id: int,
+    data: OrderLineIn,
+    user: CurrentUser = Depends(require_staff),
+    service: AdminOrderService = Depends(get_admin_order_service),
+):
+    return await service.add_line(order_id=order_id, data=data, user_id=user.id)
 
 
 @router.get("/couriers/", response_model=list[CourierOut], dependencies=[Depends(require_staff)])
