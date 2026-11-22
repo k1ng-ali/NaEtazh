@@ -107,6 +107,10 @@ class OrderLinePublicOut(BaseModel):
     quantity: Decimal
     unit_price: Decimal
     total: Decimal
+    # Своё фото товара или фото поставщика по ссылке
+    image: str | None = None
+    # Страница товара в каталоге. Пусто, если товар снят с витрины
+    product_slug: str | None = None
 
 
 class OrderPublicOut(BaseModel):

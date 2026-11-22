@@ -25,6 +25,18 @@ export interface OrderCreated {
   public_token: string
 }
 
+export interface OrderLinePublic {
+  name: string
+  unit: string
+  quantity: string
+  unit_price: string
+  total: string
+  // Своё фото или фото поставщика по ссылке
+  image: string | null
+  // Пусто, если товар снят с витрины
+  product_slug: string | null
+}
+
 export interface OrderPublic {
   number: number
   status: OrderStatus
@@ -33,7 +45,7 @@ export interface OrderPublic {
   lifting_type: LiftingType
   delivery_date: string | null
   delivery_slot: DeliverySlot | null
-  lines: { name: string; unit: string; quantity: string; unit_price: string; total: string }[]
+  lines: OrderLinePublic[]
   services: Service[]
   goods_total: string
   services_total: string

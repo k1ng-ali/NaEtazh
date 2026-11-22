@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.enums.order import AllocationSourceEnum, DeliverySlotEnum, OrderEventActionEnum, OrderStatusEnum
 from app.enums.product_status import ProductStatusEnum
 from app.enums.role import UserRoleEnum
-from app.models.catalog import Product
 from app.models.order import Order, OrderEvent, OrderLine
 from app.repositories.catalog_repo import CatalogRepository
 from app.repositories.location_repo import LocationRepository
@@ -26,7 +25,7 @@ from app.schemas.admin_order import (
     OrderRowAdmin,
     ServiceLineAdmin,
 )
-from app.services.checkout_service import allocate_line, format_address
+from app.services.checkout_service import allocate_line, catalog_slug, format_address, line_image
 
 ZERO = Decimal("0")
 
@@ -50,18 +49,6 @@ SLOT_LABELS = {
     DeliverySlotEnum.day.value: "день",
     DeliverySlotEnum.evening.value: "вечер",
 }
-
-
-def _line_image(product: Product | None, partner_pictures: dict[int, str]) -> str | None:
-    if product is None:
-        return None
-    return product.images[0] if product.images else partner_pictures.get(product.id)
-
-
-def _catalog_slug(product: Product | None) -> str | None:
-    if product is None or product.status != ProductStatusEnum.published.value:
-        return None
-    return product.slug
 
 
 class AdminOrderService:
@@ -352,8 +339,8 @@ class AdminOrderService:
                     id=line.id,
                     product_id=line.product_id,
                     name=line.name,
-                    image=_line_image(products.get(line.product_id), partner_pictures),
-                    product_slug=_catalog_slug(products.get(line.product_id)),
+                    image=line_image(products.get(line.product_id), partner_pictures),
+                    product_slug=catalog_slug(products.get(line.product_id)),
                     unit=line.unit,
                     quantity=line.quantity,
                     unit_price=line.unit_price,

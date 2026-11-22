@@ -4,9 +4,11 @@ import { useCheckoutApi } from '~/features/checkout/api'
 import { DELIVERY_SLOT, LIFTING, ORDER_STATUS } from '~/features/checkout/labels'
 import type { OrderStatus } from '~/features/checkout/types'
 import { formatPrice, formatQuantity } from '~/shared/lib/format'
+import { useMediaUrl } from '~/shared/lib/media'
 
 const route = useRoute()
 const api = useCheckoutApi()
+const mediaUrl = useMediaUrl()
 const token = computed(() => String(route.params.token))
 const isNew = computed(() => route.query.new === '1')
 
@@ -74,8 +76,15 @@ useHead(() => ({
 
       <section class="card order__lines">
         <h2 class="order__subtitle">Состав</h2>
-        <div v-for="(line, index) in order.lines" :key="index" class="order__line">
-          <span>{{ line.name }}</span>
+        <div v-for="(line, index) in order.lines" :key="index" class="order__line order__line--product">
+          <NuxtLink v-if="line.product_slug" :to="`/product/${line.product_slug}`" class="order__photo" :aria-label="line.name">
+            <img v-if="line.image" :src="mediaUrl(line.image)" alt="" loading="lazy">
+          </NuxtLink>
+          <span v-else class="order__photo">
+            <img v-if="line.image" :src="mediaUrl(line.image)" alt="" loading="lazy">
+          </span>
+          <NuxtLink v-if="line.product_slug" :to="`/product/${line.product_slug}`" class="order__name">{{ line.name }}</NuxtLink>
+          <span v-else class="order__name">{{ line.name }}</span>
           <span class="muted">{{ formatQuantity(line.quantity) }} {{ line.unit }} × {{ formatPrice(line.unit_price) }}</span>
           <strong>{{ formatPrice(line.total) }}</strong>
         </div>
@@ -169,6 +178,44 @@ useHead(() => ({
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
+  }
+
+  // Строка товара: фото слева, название и количество, сумма справа
+  &__line--product {
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    column-gap: 12px;
+
+    .muted {
+      grid-column: 2;
+    }
+
+    strong {
+      grid-column: 3;
+    }
+  }
+
+  &__photo {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 56px;
+    height: 56px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--color-bg);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  &__name {
+    align-self: end;
+  }
+
+  a.order__name:hover {
+    text-decoration: underline;
   }
 
   &__total {

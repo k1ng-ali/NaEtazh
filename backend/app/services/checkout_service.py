@@ -21,6 +21,7 @@ from app.models.catalog import Product
 from app.models.inventory import SupplierOffer
 from app.models.location import Building, ResidentialComplex, ServiceTariff
 from app.models.order import Order, OrderAllocation, OrderEvent, OrderLine, OrderServiceLine
+from app.repositories.catalog_repo import CatalogRepository
 from app.repositories.location_repo import LocationRepository
 from app.repositories.order_repo import OrderRepository
 from app.repositories.pricing_repo import PricingRepository
@@ -66,6 +67,20 @@ def format_address(
         if value:
             parts.append(f"{label} {value}")
     return ", ".join(parts)
+
+
+def line_image(product: Product | None, partner_pictures: dict[int, str]) -> str | None:
+    """Фото строки заказа: своё фото товара, а пока его нет — фото поставщика по ссылке."""
+    if product is None:
+        return None
+    return product.images[0] if product.images else partner_pictures.get(product.id)
+
+
+def catalog_slug(product: Product | None) -> str | None:
+    """Адрес товара в каталоге. Пусто, если товар снят с витрины и ссылка дала бы 404."""
+    if product is None or product.status != ProductStatusEnum.published.value:
+        return None
+    return product.slug
 
 
 async def allocate_line(repo: OrderRepository, order_line: OrderLine, offer: SupplierOffer | None) -> None:
@@ -348,6 +363,10 @@ class CheckoutService:
         )
         building, complex_ = buildings.get(order.building_id, (None, None))
         lines = await self.repo.get_lines(order_id=order.id)
+        products = await self.repo.get_products(list({line.product_id for line in lines}))
+        partner_pictures = await CatalogRepository(db=self.db).get_partner_pictures(
+            [pid for pid, product in products.items() if not product.images]
+        )
         services = await self.repo.get_services(order_id=order.id)
         return OrderPublicOut(
             number=order.id,
@@ -357,7 +376,18 @@ class CheckoutService:
             lifting_type=order.lifting_type,
             delivery_date=order.delivery_date,
             delivery_slot=order.delivery_slot,
-            lines=[OrderLinePublicOut.model_validate(line, from_attributes=True) for line in lines],
+            lines=[
+                OrderLinePublicOut(
+                    name=line.name,
+                    unit=line.unit,
+                    quantity=line.quantity,
+                    unit_price=line.unit_price,
+                    total=line.total,
+                    image=line_image(products.get(line.product_id), partner_pictures),
+                    product_slug=catalog_slug(products.get(line.product_id)),
+                )
+                for line in lines
+            ],
             services=[ServiceOut.model_validate(service, from_attributes=True) for service in services],
             goods_total=order.goods_total,
             services_total=order.services_total,
