@@ -165,7 +165,7 @@ onMounted(load)
         <OrderStatusBadge :status="order.status" />
       </div>
 
-      <div v-if="order.next_statuses.length" class="actions">
+      <div class="actions">
         <button
           v-for="status in order.next_statuses"
           :key="status"
@@ -177,6 +177,14 @@ onMounted(load)
         >
           {{ ACTIONS[status] }}
         </button>
+        <!-- В новой вкладке: накладная сама откроет окно печати, заказ остаётся открытым -->
+        <NuxtLink
+          :to="{ path: `/manager/orders/print/${order.id}`, query: { auto: '1' } }"
+          target="_blank"
+          class="a-btn a-btn--ghost actions__print"
+        >
+          Печать накладной
+        </NuxtLink>
       </div>
 
       <div class="layout">
@@ -362,6 +370,11 @@ onMounted(load)
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+
+  // Печать отделена от смены статуса и прижата вправо
+  &__print {
+    margin-left: auto;
+  }
 }
 
 .layout {
