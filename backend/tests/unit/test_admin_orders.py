@@ -172,3 +172,23 @@ async def test_add_line_without_enough_stock_is_409():
 
     assert exc.value.status_code == 409
     assert order.total == Decimal("1300")
+
+
+def test_line_image_prefers_own_photo_then_partner():
+    from app.services.admin_order_service import _line_image
+
+    own = SimpleNamespace(id=1, images=["/media/products/own.webp"])
+    partner = SimpleNamespace(id=2, images=[])
+    pictures = {2: "https://partner.example/2.jpg"}
+
+    assert _line_image(own, pictures) == "/media/products/own.webp"
+    assert _line_image(partner, pictures) == "https://partner.example/2.jpg"
+    assert _line_image(None, pictures) is None
+
+
+def test_catalog_slug_only_for_published_products():
+    from app.services.admin_order_service import _catalog_slug
+
+    assert _catalog_slug(SimpleNamespace(slug="rotband-30", status="published")) == "rotband-30"
+    assert _catalog_slug(SimpleNamespace(slug="old", status="archived")) is None
+    assert _catalog_slug(None) is None

@@ -64,6 +64,10 @@ class OrderLineAdmin(BaseModel):
     id: int
     product_id: int
     name: str
+    # Своё фото товара, а пока его нет — фото поставщика по ссылке
+    image: str | None = None
+    # Страница товара в каталоге. Пусто, если товар снят с витрины и ссылка дала бы 404
+    product_slug: str | None = None
     unit: str
     quantity: Decimal
     unit_price: Decimal

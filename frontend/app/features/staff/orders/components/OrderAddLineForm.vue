@@ -88,9 +88,10 @@ function submit() {
 </template>
 
 <style scoped lang="scss">
+// Форма стоит в начале состава, под заголовком, и отделена от строк заказа снизу
 .add-line {
-  padding-top: 12px;
-  border-top: 1px solid var(--color-line);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-line);
 
   &__form {
     display: flex;

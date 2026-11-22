@@ -41,6 +41,10 @@ export interface OrderLineAdmin {
   id: number
   product_id: number
   name: string
+  // Своё фото или фото поставщика по ссылке
+  image: string | null
+  // Пусто, если товар снят с витрины
+  product_slug: string | null
   unit: string
   quantity: string
   unit_price: string

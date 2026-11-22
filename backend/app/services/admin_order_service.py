@@ -7,7 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.enums.order import AllocationSourceEnum, DeliverySlotEnum, OrderEventActionEnum, OrderStatusEnum
 from app.enums.product_status import ProductStatusEnum
 from app.enums.role import UserRoleEnum
+from app.models.catalog import Product
 from app.models.order import Order, OrderEvent, OrderLine
+from app.repositories.catalog_repo import CatalogRepository
 from app.repositories.location_repo import LocationRepository
 from app.repositories.order_repo import OrderRepository
 from app.repositories.pricing_repo import PricingRepository
@@ -48,6 +50,18 @@ SLOT_LABELS = {
     DeliverySlotEnum.day.value: "день",
     DeliverySlotEnum.evening.value: "вечер",
 }
+
+
+def _line_image(product: Product | None, partner_pictures: dict[int, str]) -> str | None:
+    if product is None:
+        return None
+    return product.images[0] if product.images else partner_pictures.get(product.id)
+
+
+def _catalog_slug(product: Product | None) -> str | None:
+    if product is None or product.status != ProductStatusEnum.published.value:
+        return None
+    return product.slug
 
 
 class AdminOrderService:
@@ -272,6 +286,10 @@ class AdminOrderService:
         )
         building, complex_ = buildings.get(order.building_id, (None, None))
         lines = await self.repo.get_lines(order_id=order.id)
+        products = await self.repo.get_products(list({line.product_id for line in lines}))
+        partner_pictures = await CatalogRepository(db=self.db).get_partner_pictures(
+            [pid for pid, product in products.items() if not product.images]
+        )
         services = await self.repo.get_services(order_id=order.id)
         allocations = await self.repo.get_allocations(line_ids=[line.id for line in lines])
         events = await self.repo.get_events(order_id=order.id)
@@ -334,6 +352,8 @@ class AdminOrderService:
                     id=line.id,
                     product_id=line.product_id,
                     name=line.name,
+                    image=_line_image(products.get(line.product_id), partner_pictures),
+                    product_slug=_catalog_slug(products.get(line.product_id)),
                     unit=line.unit,
                     quantity=line.quantity,
                     unit_price=line.unit_price,

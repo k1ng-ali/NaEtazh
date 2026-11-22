@@ -19,6 +19,7 @@ import { useToast } from '~/features/staff/shared/toast'
 import { CONTACT_CHANNEL, DELIVERY_SLOT, LIFTING, MISSING_ITEM_POLICY } from '~/features/checkout/labels'
 import type { OrderStatus } from '~/features/checkout/types'
 import { formatDateTime, formatPrice, formatQuantity } from '~/shared/lib/format'
+import { useMediaUrl } from '~/shared/lib/media'
 
 definePageMeta({ layout: 'staff', middleware: 'staff', roles: ['admin', 'manager'] })
 
@@ -27,6 +28,7 @@ const auth = useAuthStore()
 const toast = useToast()
 const route = useRoute()
 const { siteUrl } = useRuntimeConfig().public
+const mediaUrl = useMediaUrl()
 
 const order = ref<OrderAdmin | null>(null)
 const couriers = ref<Courier[]>([])
@@ -209,12 +211,37 @@ onMounted(load)
                 + Добавить товар
               </button>
             </div>
+            <OrderAddLineForm v-if="canEditLines && isAddingLine" :is-saving="isSaving" @save="addLine" @cancel="isAddingLine = false" />
             <div v-for="line in order.lines" :key="line.id" class="line">
-              <div class="line__head">
-                <NuxtLink :to="`/manager/products/${line.product_id}`" class="line__name">{{ line.name }}</NuxtLink>
-                <strong class="line__total">{{ formatPrice(line.total) }}</strong>
+              <div class="line__main">
+                <component
+                  :is="line.product_slug ? 'a' : 'span'"
+                  :href="line.product_slug ? `/product/${line.product_slug}` : undefined"
+                  :target="line.product_slug ? '_blank' : undefined"
+                  :rel="line.product_slug ? 'noopener' : undefined"
+                  :title="line.product_slug ? 'Открыть в каталоге' : undefined"
+                  class="line__photo"
+                >
+                  <img v-if="line.image" :src="mediaUrl(line.image)" alt="" loading="lazy">
+                </component>
+                <div class="line__info">
+                  <div class="line__head">
+                    <NuxtLink :to="`/manager/products/${line.product_id}`" class="line__name">{{ line.name }}</NuxtLink>
+                    <strong class="line__total">{{ formatPrice(line.total) }}</strong>
+                  </div>
+                  <span class="a-muted">{{ formatQuantity(line.quantity) }} {{ line.unit }} × {{ formatPrice(line.unit_price) }}</span>
+                  <a
+                    v-if="line.product_slug"
+                    :href="`/product/${line.product_slug}`"
+                    target="_blank"
+                    rel="noopener"
+                    class="line__catalog"
+                  >
+                    Открыть в каталоге ↗
+                  </a>
+                  <span v-else class="a-muted line__catalog">Снят с витрины</span>
+                </div>
               </div>
-              <span class="a-muted">{{ formatQuantity(line.quantity) }} {{ line.unit }} × {{ formatPrice(line.unit_price) }}</span>
               <ul class="line__sources">
                 <li v-for="(allocation, index) in line.allocations" :key="index">
                   <span class="a-badge" :class="allocation.source_type === 'warehouse' ? 'a-badge--success' : 'a-badge--warning'">
@@ -230,7 +257,6 @@ onMounted(load)
                 </li>
               </ul>
             </div>
-            <OrderAddLineForm v-if="canEditLines && isAddingLine" :is-saving="isSaving" @save="addLine" @cancel="isAddingLine = false" />
           </section>
 
           <section class="a-card">
@@ -368,6 +394,40 @@ onMounted(load)
   &:last-child {
     padding-bottom: 0;
     border-bottom: 0;
+  }
+
+  &__main {
+    display: flex;
+    gap: 12px;
+  }
+
+  &__photo {
+    flex: none;
+    width: 64px;
+    height: 64px;
+    overflow: hidden;
+    border-radius: var(--radius-control);
+    background: var(--color-bg);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  &__catalog {
+    align-self: flex-start;
+    font-size: 14px;
+    text-decoration: underline;
   }
 
   &__head {
